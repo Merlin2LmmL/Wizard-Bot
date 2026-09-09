@@ -229,6 +229,7 @@ pub struct Undo {
     pub prev_zobrist: u64,
 }
 
+#[derive(Clone)]
 pub struct Position {
     /// [color][piece_type] bitboards
     pub pieces: [[Bitboard; 6]; 2],

@@ -700,6 +700,35 @@ fn negamax(pos: &mut Position, state: &mut SearchState, mut depth: i32, mut alph
             }
         }
 
+        // Bounded ProbCut insertion (batch4 design): early-cut noisy alternatives on non-PV nodes.
+        // Only triggers when static eval exceeds the interpolated cut threshold and the
+        // best TT move is noisy (!tt_move.is_quiet => tt_move.flag().is_capture()).
+        // Noisy current move (!is_quiet) is searched at reduced depth; if it exceeds
+        // probcut_beta we return a conservative interpolated lower bound.
+        if !is_pv && !in_check && depth <= 8 && !is_quiet && !tt_move.is_null() && tt_move.flag().is_capture() {
+            let improving = if best_score > alpha { 1 } else { 0 };
+            let probcut_beta = beta + 254 - 85 * improving;
+            if static_eval >= probcut_beta {
+                let reduced_depth = (depth - ((static_eval - probcut_beta) / 319) as i32).max(1);
+                pos.make_move(m);
+                let gives_check = is_in_check(pos, pos.side_to_move);
+                let mut child_depth_reduced = reduced_depth - 1;
+                if gives_check && reduced_depth + ply < 40 {
+                    child_depth_reduced += 1;
+                }
+                state.push_rep(pos.zobrist_key);
+                let probcut_score = -negamax(pos, state, child_depth_reduced, -beta - 1, -alpha, ply + 1, m);
+                state.pop_rep();
+                pos.unmake_move(m);
+                if probcut_score >= probcut_beta {
+                    let interpolated = ((probcut_score as f32) * 0.2695 + (beta as f32) * 0.7305) as i32;
+                    return interpolated;
+                }
+                // If reduced-depth score does not exceed probcut_beta, fall through
+                // to the normal full-depth path below (bounded: full-depth preserved).
+            }
+        }
+
         pos.make_move(m);
         let gives_check = is_in_check(pos, pos.side_to_move);
         let mut child_depth = depth - 1;
@@ -900,7 +929,7 @@ pub fn iterative_deepening<F: FnMut(&str)>(
                             let mut temp_pos = pos_for_this.clone();
                             temp_pos.make_move(*m);
                             let _z = temp_pos.zobrist_key;
-                            let score = -negamax(&mut temp_pos, &mut local_state, depth.saturating_sub(1), -beta, -alpha, 1, *m);
+                            let score = -negamax(&mut temp_pos, &mut local_state, depth, -beta, -alpha, 1, *m);
                             temp_pos.unmake_move(*m);
                             results_ref.lock().unwrap()[i] = (*m, score);
                             shared_for_aggregate.nodes_aggregate.fetch_add(local_state.local.nodes, Ordering::Relaxed);
