@@ -545,6 +545,25 @@ fn negamax(pos: &mut Position, state: &mut SearchState, mut depth: i32, mut alph
     let mut list = MoveList::new();
     crate::movegen::generate_legal_moves(pos, &mut list);
 
+    // Recursive book filter: restrict to book candidates at plies with coverage.
+    let book_candidates: Vec<&'static str> = crate::book::get_book_candidates(pos);
+    if !book_candidates.is_empty() {
+        let book_moves: std::collections::HashSet<String> =
+            book_candidates.iter().map(|u| u.to_string()).collect();
+        let original_count = list.count;
+        let mut filtered_moves = [Move::NULL; 218]; // MAX_MOVES
+        let mut filtered_count = 0;
+        for i in 0..original_count {
+            let m = list.moves[i];
+            if book_moves.contains(&m.to_uci()) {
+                filtered_moves[filtered_count] = m;
+                filtered_count += 1;
+            }
+        }
+        list.moves = filtered_moves;
+        list.count = filtered_count;
+    }
+
     if let Some(s) = terminal_score(pos, state, ply, list.count > 0) {
         return s;
     }
