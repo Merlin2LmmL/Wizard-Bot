@@ -1,0 +1,12 @@
+/target/
+/dist/
+/pkg/
+/Stockfish/
+/temp_deleted/
+/CLAUDE.md
+/.claude/
+*.zip
+!/nn-5af11540bbfe.nnue
+*.wasm
+*.rmeta
+*.rlib

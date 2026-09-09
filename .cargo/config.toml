@@ -1,0 +1,11 @@
+# Place at .cargo/config.toml (repo root, next to Cargo.toml).
+# Enables wasm SIMD and bulk-memory codegen for the release target used by
+# wasm-bindgen/wasm-pack builds. Free nps if your target browsers/runtime
+# support these (all evergreen browsers since ~2021; Node 16+).
+[build]
+jobs = 24
+
+[target.wasm32-unknown-unknown]
+rustflags = [
+    "-C", "target-feature=+simd128,+bulk-memory",
+]

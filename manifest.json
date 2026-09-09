@@ -1,0 +1,14 @@
+{
+  "format": "chsengine",
+  "formatVersion": 1,
+  "name": "WizardBot",
+  "version": "10",
+  "author": "Merlin2LmmL",
+  "description": "",
+  "license": "",
+  "kind": "wasm-uci",
+  "entry": "entry.js",
+  "wasmStrategy": "hash-fragment",
+  "wasmAsset": "wizardbot_engine_bg.wasm",
+  "assets": ["wizardbot_engine_bg.wasm"]
+}
