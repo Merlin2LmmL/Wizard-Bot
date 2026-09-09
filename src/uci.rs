@@ -33,7 +33,7 @@ impl EngineState {
         EngineState {
             pos: Position::startpos(),
             search: SearchState::new(),
-            book_rng: book::BookRng::new_seeded(),
+            book_rng: book::BookRng::new_seeded(&Position::startpos()),
         }
     }
 }
@@ -236,6 +236,20 @@ fn handle_go<'a, I: Iterator<Item = &'a str>, F: FnMut(&str)>(state: &mut Engine
     let best_move = iterative_deepening(&mut state.pos, &mut state.search, limits, token, |line| send(line));
 
     if best_move.is_null() {
+        // Terminal: no legal moves. Determine checkmate vs stalemate.
+        let mut list = crate::position::MoveList::new();
+        crate::movegen::generate_legal_moves(&state.pos, &mut list);
+        let has_legal = list.count > 0;
+        if !has_legal {
+            let in_check = crate::movegen::is_in_check(&state.pos, state.pos.side_to_move);
+            if in_check {
+                // Checkmate: positive mate 0 per Stockfish convention (captured session reference)
+                send("info depth 0 score mate 0 pv (none)");
+            } else {
+                // Stalemate
+                send("info depth 0 score cp 0 pv (none)");
+            }
+        }
         send("bestmove (none)");
     } else {
         send(&format!("bestmove {}", best_move.to_uci()));
