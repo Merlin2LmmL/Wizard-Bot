@@ -2,27 +2,6 @@ use crate::position::{Color, Position};
 
 include!(concat!(env!("OUT_DIR"), "/opening_book_data.rs"));
 
-/// wasm32-unknown-unknown has no OS clock: std::time::SystemTime::now()
-/// panics outright there ("time not implemented on this platform"), it
-/// doesn't just return a wrong value. js_sys::Date is what actually reaches
-/// the browser's clock via JS interop, so we route through that on wasm32
-/// and keep the normal std path everywhere else. (This mirrors the same
-/// helper in uci.rs -- kept as a local copy here to avoid introducing a
-/// cross-module dependency just for one function.)
-fn now_ms() -> f64 {
-    #[cfg(target_arch = "wasm32")]
-    {
-        js_sys::Date::now()
-    }
-    #[cfg(not(target_arch = "wasm32"))]
-    {
-        std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap()
-            .as_millis() as f64
-    }
-}
-
 // Tiny xorshift64* PRNG seeded from the current time, so we don't need
 // `getrandom` unless the caller prefers that route (Cargo.toml already
 // pulls in `getrandom`'s js feature as a fallback/alternative; this local
@@ -30,8 +9,13 @@ fn now_ms() -> f64 {
 pub struct BookRng(u64);
 
 impl BookRng {
-    pub fn new_seeded() -> Self {
-        let seed = (now_ms() as u64) | 1;
+    pub fn new_seeded(pos: &Position) -> Self {
+        let key_str = pos.book_key();
+        let mut seed: u64 = 1;
+        for b in key_str.bytes() {
+            seed = seed.wrapping_mul(31).wrapping_add(b as u64);
+        }
+        seed |= 1;
         BookRng(seed)
     }
     pub fn next_u64(&mut self) -> u64 {
