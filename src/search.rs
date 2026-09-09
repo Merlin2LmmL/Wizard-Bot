@@ -689,6 +689,17 @@ fn negamax(pos: &mut Position, state: &mut SearchState, mut depth: i32, mut alph
             }
         }
 
+        // SEE-based pruning for losing captures: distinct from ordering SEE (search.rs:310-314).
+        // Modeled on Reckless/repo/src/search.rs:841-850 (SEE Pruning, depth-scaled threshold)
+        // and Stockfish/src/search.cpp: depth-scaled margin then !pos.see_ge(move, -margin).
+        if m.flag().is_capture() && !is_pv && depth <= 8 && !in_check && ply > 0 && move_index > 0 {
+            let see_margin = 10 * depth + 15;
+            let see_val = crate::movegen::see(pos, m);
+            if see_val < -see_margin {
+                continue;
+            }
+        }
+
         pos.make_move(m);
         let gives_check = is_in_check(pos, pos.side_to_move);
         let mut child_depth = depth - 1;
