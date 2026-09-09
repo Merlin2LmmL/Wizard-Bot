@@ -1,39 +1,51 @@
 #!/usr/bin/env python3
-import subprocess, asyncio, websockets
+import asyncio, websockets, subprocess, sys, time
 
-PROC = subprocess.Popen(
-    ["./target/release/uci_binary"],
-    stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-    stderr=subprocess.PIPE, text=True, bufsize=1
-)
+LOG = open("/tmp/hybrid_io.log", "w", buffering=1)
 
-CURRENT_WS = None  # track the one active client
+def log_stdin(s):
+    LOG.write(f"[{time.monotonic():.6f}] STDIN: {s!r}\n")
 
-async def broadcaster():
-    loop = asyncio.get_event_loop()
-    while True:
-        line = await loop.run_in_executor(None, PROC.stdout.readline)
-        if line and CURRENT_WS is not None:
-            try:
-                await CURRENT_WS.send(line.strip())
-            except Exception as e:
-                import sys
-                sys.stderr.write(f"WS-SEND-ERR: {e}\n")
+def log_stdout(s):
+    LOG.write(f"[{time.monotonic():.6f}] STDOUT: {s!r}\n")
 
 async def handler(ws, path):
-    global CURRENT_WS
-    CURRENT_WS = ws
+    proc = subprocess.Popen(
+        ["./target/release/uci_binary"],
+        stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE, text=True, bufsize=1
+    )
+
+    def stderr_reader():
+        for err_line in iter(proc.stderr.readline, ''):
+            LOG.write(f"[DIAG-STDERR] {err_line!r}\n")
+
+    import threading
+    threading.Thread(target=stderr_reader, daemon=True).start()
+
+    loop = asyncio.get_event_loop()
+
+    async def reader():
+        while True:
+            line = await loop.run_in_executor(None, proc.stdout.readline)
+            LOG.write(f"[DIAG] readline returned: line={line!r} poll={proc.poll()}\n")
+            if line:
+                log_stdout(line)
+                try:
+                    await ws.send(line.strip())
+                except Exception as e:
+                    import websockets
+                    exc_name = type(e).__name__
+                    LOG.write(f"[DIAG-CONN-ERROR] {exc_name}: {e!r} poll={proc.poll()} stderr_readable={not proc.stderr.closed}\n")
+                    sys.stderr.write(f"WS-SEND-ERR: {e}\n")
+
+    asyncio.create_task(reader())
+
     async for msg in ws:
-        PROC.stdin.write(msg + "\n")
-        PROC.stdin.flush()
-    if CURRENT_WS is ws:
-        CURRENT_WS = None
+        log_stdin(msg)
+        proc.stdin.write(msg + "\n")
+        proc.stdin.flush()
 
-async def main():
-    PROC.stdin.write("uci\n")   # sent exactly once, at server startup
-    PROC.stdin.flush()
-    asyncio.create_task(broadcaster())  # exactly one reader, ever
-    async with websockets.serve(handler, "", 8765):
-        await asyncio.Future()
-
-asyncio.run(main())
+start_server = websockets.serve(handler, "", 8765, ping_interval=None)
+asyncio.get_event_loop().run_until_complete(start_server)
+asyncio.get_event_loop().run_forever()
