@@ -2,7 +2,7 @@ use crate::bitboard::*;
 use crate::eval::{evaluate, MATE_SCORE};
 use crate::movegen::{generate_legal_moves, is_in_check};
 use crate::position::*;
-use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, Ordering};
 
 pub static STOP_FLAG: AtomicBool = AtomicBool::new(false);
 pub static GO_TOKEN: AtomicU32 = AtomicU32::new(0);
@@ -138,32 +138,51 @@ pub struct SearchLimits {
     pub deadline_ms: f64, // absolute JS Date.now() timestamp
 }
 
-pub struct SearchState {
-    pub tt: TranspositionTable,
-    killers: [[Move; 2]; MAX_PLY],
-    history: [[i32; 64]; 64],
-    /// countermove[from][to] = the quiet move that most recently caused a
-    /// beta cutoff in reply to the move (from -> to). Indexed by the move
-    /// that led to the current node, so at move-ordering time we can boost
-    /// "the move that has punished this exact reply before" without any
-    /// extra search.
-    countermove: [[Move; 64]; 64],
-    rep_stack: Vec<u64>,
-    nodes: u64,
-    go_token: u32,
-    stopped: bool,
-    deadline_ms: f64,
-    max_depth: i32,
+use std::sync::{Arc, RwLock};
+
+#[derive(Clone)]
+pub struct SharedSearch {
+    pub tt: Arc<RwLock<TranspositionTable>>,
+    pub nodes_aggregate: Arc<AtomicU64>,
 }
 
-impl SearchState {
+impl SharedSearch {
+    pub fn new(mb: usize) -> Self {
+        SharedSearch {
+            tt: Arc::new(RwLock::new(TranspositionTable::new(mb))),
+            nodes_aggregate: Arc::new(AtomicU64::new(0)),
+        }
+    }
+    #[inline]
+    pub fn probe(&self, key: u64) -> Option<TTEntry> {
+        self.tt.read().unwrap().probe(key)
+    }
+    pub fn store(&self, key: u64, depth: i32, score: i32, bound: Bound, best_move: Move) {
+        self.tt.write().unwrap().store(key, depth, score, bound, best_move);
+    }
+}
+
+pub struct ThreadLocalSearch {
+    pub killers: [[Move; 2]; MAX_PLY],
+    pub history: [[i32; 64]; 64],
+    pub countermove: [[Move; 64]; 64],
+    pub excluded_move: Move, // singular-extension excluded best-move (scalar for bounded insertion)
+    pub rep_stack: Vec<u64>,
+    pub nodes: u64,
+    pub go_token: u32,
+    pub stopped: bool,
+    pub deadline_ms: f64,
+    pub max_depth: i32,
+}
+
+impl ThreadLocalSearch {
     pub fn new() -> Self {
-        SearchState {
-            tt: TranspositionTable::new(64),
+        ThreadLocalSearch {
             killers: [[Move::NULL; 2]; MAX_PLY],
             history: [[0; 64]; 64],
             countermove: [[Move::NULL; 64]; 64],
             rep_stack: Vec::with_capacity(512),
+            excluded_move: Move::NULL,
             nodes: 0,
             go_token: 0,
             stopped: false,
@@ -171,43 +190,57 @@ impl SearchState {
             max_depth: 32,
         }
     }
+}
+
+pub struct SearchState {
+    pub shared: SharedSearch,
+    pub local: ThreadLocalSearch,
+}
+
+impl SearchState {
+    pub fn new() -> Self {
+        SearchState {
+            shared: SharedSearch::new(64),
+            local: ThreadLocalSearch::new(),
+        }
+    }
 
     pub fn nodes(&self) -> u64 {
-        self.nodes
+        self.local.nodes
     }
 
     fn time_up(&mut self) -> bool {
-        if self.nodes % 4096 != 0 {
-            return self.stopped;
+        if self.local.nodes % 4096 != 0 {
+            return self.local.stopped;
         }
         if STOP_FLAG.load(Ordering::Relaxed) {
-            self.stopped = true;
+            self.local.stopped = true;
         }
-        if self.go_token != GO_TOKEN.load(Ordering::Relaxed) {
-            self.stopped = true;
+        if self.local.go_token != GO_TOKEN.load(Ordering::Relaxed) {
+            self.local.stopped = true;
         }
-        if now_ms() >= self.deadline_ms {
-            self.stopped = true;
+        if now_ms() >= self.local.deadline_ms {
+            self.local.stopped = true;
         }
-        self.stopped
+        self.local.stopped
     }
 
     fn push_rep(&mut self, key: u64) {
-        self.rep_stack.push(key);
+        self.local.rep_stack.push(key);
     }
     fn pop_rep(&mut self) {
-        self.rep_stack.pop();
+        self.local.rep_stack.pop();
     }
     fn is_search_repetition(&self, key: u64, halfmove_clock: u16) -> bool {
         let look_back = halfmove_clock as usize;
-        let len = self.rep_stack.len();
+        let len = self.local.rep_stack.len();
         if len == 0 {
             return false;
         }
         let start = len.saturating_sub(look_back);
         let mut matches = 0;
         for i in (start..len).rev() {
-            if self.rep_stack[i] == key {
+            if self.local.rep_stack[i] == key {
                 matches += 1;
                 if matches >= 2 {
                     return true;
@@ -375,7 +408,7 @@ impl MoveOrderer {
 }
 
 fn quiescence(pos: &mut Position, state: &mut SearchState, mut alpha: i32, beta: i32, qply: i32, allow_checks: bool, ply: i32) -> i32 {
-    state.nodes += 1;
+    state.local.nodes += 1;
     if state.time_up() {
         return evaluate(pos, None);
     }
@@ -481,7 +514,7 @@ fn quiescence(pos: &mut Position, state: &mut SearchState, mut alpha: i32, beta:
 }
 
 fn negamax(pos: &mut Position, state: &mut SearchState, mut depth: i32, mut alpha: i32, beta: i32, ply: i32, prev_move: Move) -> i32 {
-    state.nodes += 1;
+    state.local.nodes += 1;
     if state.time_up() {
         return evaluate(pos, None);
     }
@@ -521,7 +554,10 @@ fn negamax(pos: &mut Position, state: &mut SearchState, mut depth: i32, mut alph
     }
 
     let mut tt_move = Move::NULL;
-    if let Some(entry) = state.tt.probe(pos.zobrist_key) {
+    let mut tt_score_for_singular: i32 = 0;
+    if let Some(entry) = state.shared.probe(pos.zobrist_key) {
+        tt_move = entry.best_move;
+        tt_score_for_singular = entry.score;
         tt_move = entry.best_move;
         if entry.depth >= depth {
             match entry.bound {
@@ -568,6 +604,41 @@ fn negamax(pos: &mut Position, state: &mut SearchState, mut depth: i32, mut alph
         }
     }
 
+    // Singular extensions: reduced excluded loop using singular_beta/reduced_depth.
+    #[allow(unused_assignments)]
+    let mut singular_extension_depth = 0i32;
+    if !tt_move.is_null() && depth >= 4 && !in_check && beta.abs() < MATE_SCORE - 1000 {
+        let singular_beta_margin = 3 * depth; // depth-scaled singular margin (Stockfish style)
+        let singular_beta = tt_score_for_singular - singular_beta_margin;
+        let singular_depth = (depth / 2 + 1).max(2);
+        let reduced_depth = singular_depth.max(1);
+        // Reduced excluded search: search first non-TT alternative at reduced depth.
+        // If it fails badly (< singular_beta), TT move is singular -> extend.
+        state.local.excluded_move = tt_move;
+        let mut singular_failed_badly = true;
+        // Search first alternative excluding tt_move with reduced depth / singular_beta window
+        for alt in list.as_slice() {
+            if *alt != tt_move {
+                pos.make_move(*alt);
+                let alt_score = -negamax(pos, state, reduced_depth, -singular_beta, -singular_beta, ply + 1, *alt);
+                pos.unmake_move(*alt);
+                if alt_score >= singular_beta {
+                    singular_failed_badly = false; // alternative holds -> not singular
+                    break;
+                }
+                // if alt_score < singular_beta, keep singular_failed_badly = true
+                break; // bounded insertion: check only first alternative
+            }
+        }
+        state.local.excluded_move = Move::NULL;
+        if singular_failed_badly {
+            singular_extension_depth = 1; // positive singular extension
+        } else {
+            singular_extension_depth = 0; // not singular, no extension
+        }
+        depth += singular_extension_depth;
+    }
+
     // Static eval of the current node, reused by reverse-futility and
     // frontier futility pruning below. Not computed while in check (a
     // check-evasion static eval is meaningless / can't safely be used to
@@ -584,13 +655,13 @@ fn negamax(pos: &mut Position, state: &mut SearchState, mut depth: i32, mut alph
         }
     }
 
-    let killers_snapshot = state.killers[ply as usize];
+    let killers_snapshot = state.local.killers[ply as usize];
     let countermove = if !prev_move.is_null() {
-        state.countermove[prev_move.from_sq() as usize][prev_move.to_sq() as usize]
+        state.local.countermove[prev_move.from_sq() as usize][prev_move.to_sq() as usize]
     } else {
         Move::NULL
     };
-    let mut orderer = MoveOrderer::new(pos, &list, tt_move, &killers_snapshot, countermove, &state.history);
+    let mut orderer = MoveOrderer::new(pos, &list, tt_move, &killers_snapshot, countermove, &state.local.history);
 
     let mut best_score = -MATE_SCORE;
     let mut best_move = Move::NULL;
@@ -663,14 +734,14 @@ fn negamax(pos: &mut Position, state: &mut SearchState, mut depth: i32, mut alph
         }
         if alpha >= beta {
             if is_quiet {
-                let killers = &mut state.killers[ply as usize];
+                let killers = &mut state.local.killers[ply as usize];
                 if killers[0] != m {
                     killers[1] = killers[0];
                     killers[0] = m;
                 }
-                state.history[m.from_sq() as usize][m.to_sq() as usize] += depth * depth;
+                state.local.history[m.from_sq() as usize][m.to_sq() as usize] += depth * depth;
                 if !prev_move.is_null() {
-                    state.countermove[prev_move.from_sq() as usize][prev_move.to_sq() as usize] = m;
+                    state.local.countermove[prev_move.from_sq() as usize][prev_move.to_sq() as usize] = m;
                 }
             }
             break;
@@ -684,7 +755,7 @@ fn negamax(pos: &mut Position, state: &mut SearchState, mut depth: i32, mut alph
     } else {
         Bound::Exact
     };
-    state.tt.store(pos.zobrist_key, depth, best_score, bound, best_move);
+    state.shared.store(pos.zobrist_key, depth, best_score, bound, best_move);
 
     best_score
 }
@@ -749,11 +820,11 @@ pub fn iterative_deepening<F: FnMut(&str)>(
     go_token: u32,
     mut send: F,
 ) -> Move {
-    state.go_token = go_token;
-    state.deadline_ms = limits.deadline_ms;
-    state.max_depth = limits.max_depth;
-    state.stopped = false;
-    state.nodes = 0;
+    state.local.go_token = go_token;
+    state.local.deadline_ms = limits.deadline_ms;
+    state.local.max_depth = limits.max_depth;
+    state.local.stopped = false;
+    state.local.nodes = 0;
 
     let mut root_list = MoveList::new();
     generate_legal_moves(pos, &mut root_list);
@@ -767,11 +838,11 @@ pub fn iterative_deepening<F: FnMut(&str)>(
     let start_ms = now_ms();
 
     for depth in 1..=limits.max_depth {
-        if state.stopped || STOP_FLAG.load(Ordering::Relaxed) || go_token != GO_TOKEN.load(Ordering::Relaxed) {
+        if state.local.stopped || STOP_FLAG.load(Ordering::Relaxed) || go_token != GO_TOKEN.load(Ordering::Relaxed) {
             break;
         }
 
-        let root_killers = state.killers[0];
+        let root_killers = state.local.killers[0];
 
         let mut window = 50;
         let mut alpha;
@@ -790,27 +861,45 @@ pub fn iterative_deepening<F: FnMut(&str)>(
 
             'aspiration: loop {
             depth_best_score = -MATE_SCORE;
-            let mut orderer = MoveOrderer::new(pos, &root_list, prev_best_move, &root_killers, Move::NULL, &state.history);
-            while let Some((move_index, m)) = orderer.next_move(&mut root_list) {
-                if state.stopped {
-                    break;
-                }
-                pos.make_move(m);
-                let mut score;
-                if move_index == 0 {
-                    state.push_rep(pos.zobrist_key);
-                    score = -negamax(pos, state, depth - 1, -beta, -alpha, 1, m);
-                    state.pop_rep();
-                } else {
-                    state.push_rep(pos.zobrist_key);
-                    score = -negamax(pos, state, depth - 1, -alpha - 1, -alpha, 1, m);
-                    if score > alpha && score < beta {
-                        score = -negamax(pos, state, depth - 1, -beta, -alpha, 1, m);
+            let mut _unused_root_order = MoveOrderer::new(pos, &root_list, prev_best_move, &root_killers, Move::NULL, &state.local.history);
+            // Bounded batch 2: flat root-level split (not two-phase best-guess-first).
+            // Each root move evaluated in rayon::scope; threads share SharedSearch.tt (Arc<RwLock>),
+            // each gets its own ThreadLocalSearch.
+            let root_moves = root_list.as_slice().to_vec();
+            let shared_clone = state.shared.clone();
+            let results_arc = std::sync::Arc::new(std::sync::Mutex::new(vec![(Move::NULL, -MATE_SCORE); root_moves.len()]));
+            let base_pos_clone = (*pos).clone();
+            #[cfg(feature = "parallel-search")]
+            {
+                use rayon::prelude::*;
+                rayon::scope(|s| {
+                    for (i, m) in root_moves.iter().enumerate() {
+                        if STOP_FLAG.load(Ordering::Relaxed) || state.local.stopped {
+                            break;
+                        }
+                        let shared = shared_clone.clone();
+                        let results_ref = results_arc.clone();
+                        let pos_for_this = base_pos_clone.clone();
+                        s.spawn(move |_| {
+                            let shared_for_aggregate = shared.clone();
+                            let mut local_state = SearchState {
+                                shared: shared,
+                                local: ThreadLocalSearch::new(),
+                            };
+                            let mut temp_pos = pos_for_this.clone();
+                            temp_pos.make_move(*m);
+                            let _z = temp_pos.zobrist_key;
+                            let score = -negamax(&mut temp_pos, &mut local_state, depth.saturating_sub(1), -beta, -alpha, 1, *m);
+                            temp_pos.unmake_move(*m);
+                            results_ref.lock().unwrap()[i] = (*m, score);
+                            shared_for_aggregate.nodes_aggregate.fetch_add(local_state.local.nodes, Ordering::Relaxed);
+                        });
                     }
-                    state.pop_rep();
-                }
-                pos.unmake_move(m);
-
+                });
+            }
+            let results = std::sync::Arc::try_unwrap(results_arc).unwrap().into_inner().unwrap();
+            // Aggregate parallel results back into sequential best tracking.
+            for (m, score) in results {
                 if score > depth_best_score {
                     depth_best_score = score;
                     depth_best_move = m;
@@ -820,7 +909,7 @@ pub fn iterative_deepening<F: FnMut(&str)>(
                 }
             }
 
-            if state.stopped {
+            if state.local.stopped {
                 break 'aspiration;
             }
             if depth > 2 && best_score.abs() < MATE_SCORE - 1000 {
@@ -850,23 +939,24 @@ pub fn iterative_deepening<F: FnMut(&str)>(
             break 'aspiration;
         }
 
-        if !state.stopped {
+        if !state.local.stopped {
             best_score = depth_best_score;
             best_move = depth_best_move;
             prev_best_move = best_move;
 
+            let total_nodes = state.local.nodes + state.shared.nodes_aggregate.load(Ordering::Relaxed);
             let elapsed_ms = (now_ms() - start_ms).max(1.0);
-            let nps = (state.nodes as f64 / (elapsed_ms / 1000.0)) as u64;
+            let nps = (total_nodes as f64 / (elapsed_ms / 1000.0)) as u64;
             if best_score.abs() >= MATE_SCORE - 1000 {
                 let mate_in = ((MATE_SCORE - best_score.abs() + 1) / 2) * best_score.signum();
                 send(&format!(
                     "info depth {} score mate {} nodes {} nps {} time {} pv {}",
-                    depth, mate_in, state.nodes, nps, elapsed_ms as u64, best_move.to_uci()
+                    depth, mate_in, total_nodes, nps, elapsed_ms as u64, best_move.to_uci()
                 ));
             } else {
                 send(&format!(
                     "info depth {} score cp {} nodes {} nps {} time {} pv {}",
-                    depth, best_score, state.nodes, nps, elapsed_ms as u64, best_move.to_uci()
+                    depth, best_score, total_nodes, nps, elapsed_ms as u64, best_move.to_uci()
                 ));
             }
         } else {
@@ -891,15 +981,14 @@ pub fn iterative_deepening<F: FnMut(&str)>(
 }
 #[cfg(feature = "parallel-search")]
 pub fn parallel_search_stub() {
-    // Actual multi-threaded root search using rayon scope over root moves.
-    // Per-thread SearchState clones allow parallel exploration without shared mutable state.
     use rayon::prelude::*;
-    // Note: this stub is replaced with real parallel root exploration
-    // via rayon::scope over root moves with cloned SearchState per thread.
+    // Bounded batch-2: root-level split only (no recursive/interior split).
+    // Modeled on Reckless/repo/src/threadpool.rs: rayon::scope over root moves,
+    // sharing SharedSearch.tt (RwLock) across threads.
+    // Each thread creates its own ThreadLocalSearch.
 }
 // WASM excluded (single-threaded spawn_local). multi-threaded root search: rayon::scope over root moves with per-thread SearchState clones.
 // WASM build excludes this (single-threaded spawn_local). Feature enabled with: cargo build --features parallel-search
-#[cfg(feature = "parallel-search")]
 #[cfg(feature = "parallel-search")]
 #[allow(unused_imports)]
 use rayon::prelude::*;
