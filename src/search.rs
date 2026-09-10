@@ -956,6 +956,28 @@ pub fn iterative_deepening<F: FnMut(&str)>(
                     }
                 });
             }
+            #[cfg(not(feature = "parallel-search"))]
+            {
+                // Sequential single-threaded fallback: evaluate each root move directly
+                // without rayon spawn, sharing the same TT via cloned Arc and writing
+                // into the same results_arc so downstream aggregation is unchanged.
+                for (i, m) in root_moves.iter().enumerate() {
+                    if STOP_FLAG.load(Ordering::Relaxed) || state.local.stopped {
+                        break;
+                    }
+                    let shared_for_aggregate = _shared_clone.clone();
+                    let mut local_state = SearchState {
+                        shared: shared_for_aggregate.clone(),
+                        local: ThreadLocalSearch::new(),
+                    };
+                    let mut temp_pos = _base_pos_clone.clone();
+                    temp_pos.make_move(*m);
+                    let score = -negamax(&mut temp_pos, &mut local_state, depth, -beta, -alpha, 1, *m);
+                    temp_pos.unmake_move(*m);
+                    results_arc.lock().unwrap()[i] = (*m, score);
+                    shared_for_aggregate.nodes_aggregate.fetch_add(local_state.local.nodes, Ordering::Relaxed);
+                }
+            }
             let results = std::sync::Arc::try_unwrap(results_arc).unwrap().into_inner().unwrap();
             // Aggregate parallel results back into sequential best tracking.
             for (m, score) in results {
