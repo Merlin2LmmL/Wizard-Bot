@@ -883,6 +883,7 @@ pub fn iterative_deepening<F: FnMut(&str)>(
     state.local.max_depth = limits.max_depth;
     state.local.stopped = false;
     state.local.nodes = 0;
+    state.shared.nodes_aggregate.store(0, Ordering::Relaxed);
 
     let mut root_list = MoveList::new();
     generate_legal_moves(pos, &mut root_list);
