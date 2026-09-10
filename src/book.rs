@@ -68,7 +68,7 @@ fn pick_by_shallow_eval(pos: &Position, candidates: &[(&str, u32)]) -> Option<St
             deadline_ms: 150.0, // 150ms time-ceiling backup: whichever hits first (depth or time) stops
         };
         let mut captured_score: i32 = 0;
-        let captured_best: crate::position::Move = crate::search::iterative_deepening(
+        let _captured_best: crate::position::Move = crate::search::iterative_deepening(
             &mut temp_pos,
             &mut temp_state,
             limits,

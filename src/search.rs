@@ -577,7 +577,6 @@ fn negamax(pos: &mut Position, state: &mut SearchState, mut depth: i32, mut alph
     if let Some(entry) = state.shared.probe(pos.zobrist_key) {
         tt_move = entry.best_move;
         tt_score_for_singular = entry.score;
-        tt_move = entry.best_move;
         if entry.depth >= depth {
             match entry.bound {
                 Bound::Exact => return entry.score,
@@ -925,9 +924,9 @@ pub fn iterative_deepening<F: FnMut(&str)>(
             // Each root move evaluated in rayon::scope; threads share SharedSearch.tt (Arc<RwLock>),
             // each gets its own ThreadLocalSearch.
             let root_moves = root_list.as_slice().to_vec();
-            let shared_clone = state.shared.clone();
+            let _shared_clone = state.shared.clone();
             let results_arc = std::sync::Arc::new(std::sync::Mutex::new(vec![(Move::NULL, -MATE_SCORE); root_moves.len()]));
-            let base_pos_clone = (*pos).clone();
+            let _base_pos_clone = (*pos).clone();
             #[cfg(feature = "parallel-search")]
             {
                 use rayon::prelude::*;
@@ -936,9 +935,9 @@ pub fn iterative_deepening<F: FnMut(&str)>(
                         if STOP_FLAG.load(Ordering::Relaxed) || state.local.stopped {
                             break;
                         }
-                        let shared = shared_clone.clone();
+                        let shared = _shared_clone.clone();
                         let results_ref = results_arc.clone();
-                        let pos_for_this = base_pos_clone.clone();
+                        let pos_for_this = _base_pos_clone.clone();
                         s.spawn(move |_| {
                             let shared_for_aggregate = shared.clone();
                             let mut local_state = SearchState {
