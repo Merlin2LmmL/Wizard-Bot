@@ -39,12 +39,32 @@ async def handler(ws, path):
                     LOG.write(f"[DIAG-CONN-ERROR] {exc_name}: {e!r} poll={proc.poll()} stderr_readable={not proc.stderr.closed}\n")
                     sys.stderr.write(f"WS-SEND-ERR: {e}\n")
 
-    asyncio.create_task(reader())
+    reader_task = asyncio.create_task(reader())
 
-    async for msg in ws:
-        log_stdin(msg)
-        proc.stdin.write(msg + "\n")
-        proc.stdin.flush()
+    try:
+        async for msg in ws:
+            log_stdin(msg)
+            proc.stdin.write(msg + "\n")
+            proc.stdin.flush()
+    except websockets.exceptions.ConnectionClosed:
+        LOG.write(f"[DIAG-CONN] Client disconnected (ConnectionClosed); cleaning up engine and reader.\n")
+        sys.stderr.write("WS-CLIENT-DISCONNECT: ConnectionClosed caught, cleaning up\n")
+    finally:
+        # Prevent engine hang and reader leak on disconnect
+        try:
+            proc.stdin.close()
+        except Exception:
+            pass
+        try:
+            proc.kill()
+            proc.wait(timeout=2)
+        except Exception:
+            pass
+        reader_task.cancel()
+        try:
+            await reader_task
+        except asyncio.CancelledError:
+            pass
 
 start_server = websockets.serve(handler, "", 8765, ping_interval=None)
 asyncio.get_event_loop().run_until_complete(start_server)
