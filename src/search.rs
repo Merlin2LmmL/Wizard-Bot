@@ -1005,7 +1005,16 @@ pub fn iterative_deepening<F: FnMut(&str)>(
             let total_nodes = state.local.nodes + state.shared.nodes_aggregate.load(Ordering::Relaxed);
             let elapsed_ms = (now_ms() - start_ms).max(1.0);
             let nps = (total_nodes as f64 / (elapsed_ms / 1000.0)) as u64;
-            if best_score.abs() >= MATE_SCORE - 1000 {
+            // Sentinel guard: if best_score is the unmodified initial value,
+            // the parallel split never produced valid results (feature missing
+            // or scope skipped). Don't synthesize a fake mate 0 — Fix A in
+            // uci.rs handles real terminal detection independently.
+            if best_score == -MATE_SCORE {
+                send(&format!(
+                    "info depth {} score cp -32768 nodes {} nps {} time {} pv (none)",
+                    depth, total_nodes, nps, elapsed_ms as u64
+                ));
+            } else if best_score.abs() >= MATE_SCORE - 1000 {
                 let mate_in = ((MATE_SCORE - best_score.abs() + 1) / 2) * best_score.signum();
                 send(&format!(
                     "info depth {} score mate {} nodes {} nps {} time {} pv {}",
