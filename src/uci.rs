@@ -140,6 +140,7 @@ fn handle_position<'a, I: Iterator<Item = &'a str>>(state: &mut EngineState, par
 fn handle_go<'a, I: Iterator<Item = &'a str>, F: FnMut(&str)>(state: &mut EngineState, parts: &mut I, mut send: F) {
     STOP_FLAG.store(false, Ordering::SeqCst);
     let token = GO_TOKEN.fetch_add(1, Ordering::SeqCst) + 1;
+    state.search.shared.new_generation();
 
     let mut max_depth = 32i32;
     let mut movetime_ms: Option<f64> = None;

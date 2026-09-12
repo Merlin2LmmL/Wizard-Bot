@@ -48,6 +48,7 @@ struct TTEntry {
     score: i32,
     bound: Bound,
     best_move: Move,
+    generation: u8,
 }
 
 impl TTEntry {
@@ -57,6 +58,7 @@ impl TTEntry {
         score: 0,
         bound: Bound::Exact,
         best_move: Move::NULL,
+        generation: 0,
     };
     #[inline(always)]
     fn is_empty(&self) -> bool {
@@ -74,6 +76,7 @@ type TTBucket = [TTEntry; TT_BUCKET_SIZE];
 pub struct TranspositionTable {
     buckets: Vec<TTBucket>,
     mask: usize,
+    generation: u8,
 }
 
 impl TranspositionTable {
@@ -84,7 +87,11 @@ impl TranspositionTable {
         TranspositionTable {
             buckets: vec![[TTEntry::EMPTY; TT_BUCKET_SIZE]; bucket_count],
             mask: bucket_count - 1,
+            generation: 0,
         }
+    }
+    pub fn new_generation(&mut self) {
+        self.generation = self.generation.wrapping_add(1);
     }
     #[inline]
     fn bucket_idx(&self, key: u64) -> usize {
@@ -102,13 +109,14 @@ impl TranspositionTable {
     fn store(&mut self, key: u64, depth: i32, score: i32, bound: Bound, best_move: Move) {
         let idx = self.bucket_idx(key);
         let bucket = &mut self.buckets[idx];
+        let gen = self.generation;
 
         // Same position already in this bucket: refresh in place (only
         // overwrite with a shallower search if we have nothing better).
         for slot in bucket.iter_mut() {
             if !slot.is_empty() && slot.key == key {
-                if depth >= slot.depth || bound == Bound::Exact {
-                    *slot = TTEntry { key, depth, score, bound, best_move };
+                if depth >= slot.depth || bound == Bound::Exact || slot.generation != gen {
+                    *slot = TTEntry { key, depth, score, bound, best_move, generation: gen };
                 }
                 return;
             }
@@ -116,20 +124,21 @@ impl TranspositionTable {
         // Free slot in the bucket.
         for slot in bucket.iter_mut() {
             if slot.is_empty() {
-                *slot = TTEntry { key, depth, score, bound, best_move };
+                *slot = TTEntry { key, depth, score, bound, best_move, generation: gen };
                 return;
             }
         }
         // Bucket full of other positions: evict the shallowest entry.
         let mut worst_i = 0;
-        let mut worst_depth = bucket[0].depth;
+        let mut worst_value = bucket[0].depth as i32 - 8 * gen.wrapping_sub(bucket[0].generation) as i32;
         for (i, slot) in bucket.iter().enumerate().skip(1) {
-            if slot.depth < worst_depth {
-                worst_depth = slot.depth;
+            let value = slot.depth as i32 - 8 * gen.wrapping_sub(slot.generation) as i32;
+            if value < worst_value {
+                worst_value = value;
                 worst_i = i;
             }
         }
-        bucket[worst_i] = TTEntry { key, depth, score, bound, best_move };
+        bucket[worst_i] = TTEntry { key, depth, score, bound, best_move, generation: gen };
     }
 }
 
@@ -159,6 +168,9 @@ impl SharedSearch {
     }
     pub fn store(&self, key: u64, depth: i32, score: i32, bound: Bound, best_move: Move) {
         self.tt.write().unwrap().store(key, depth, score, bound, best_move);
+    }
+    pub fn new_generation(&self) {
+        self.tt.write().unwrap().new_generation();
     }
 }
 
@@ -248,6 +260,28 @@ impl SearchState {
             }
         }
         false
+    }
+}
+
+const MAX_MATE_PLY: i32 = 1000;
+
+fn score_to_tt(score: i32, ply: i32) -> i32 {
+    if score >= MATE_SCORE - MAX_MATE_PLY {
+        score + ply
+    } else if score <= -(MATE_SCORE - MAX_MATE_PLY) {
+        score - ply
+    } else {
+        score
+    }
+}
+
+fn score_from_tt(score: i32, ply: i32) -> i32 {
+    if score >= MATE_SCORE - MAX_MATE_PLY {
+        score - ply
+    } else if score <= -(MATE_SCORE - MAX_MATE_PLY) {
+        score + ply
+    } else {
+        score
     }
 }
 
@@ -513,7 +547,7 @@ fn quiescence(pos: &mut Position, state: &mut SearchState, mut alpha: i32, beta:
     best
 }
 
-fn negamax(pos: &mut Position, state: &mut SearchState, mut depth: i32, mut alpha: i32, beta: i32, ply: i32, prev_move: Move) -> i32 {
+fn negamax(pos: &mut Position, state: &mut SearchState, mut depth: i32, mut alpha: i32, mut beta: i32, ply: i32, prev_move: Move) -> i32 {
     state.local.nodes += 1;
     if state.time_up() {
         return evaluate(pos, None);
@@ -572,27 +606,48 @@ fn negamax(pos: &mut Position, state: &mut SearchState, mut depth: i32, mut alph
         return quiescence(pos, state, alpha, beta, QUIESCENCE_MAX_PLY, true, ply);
     }
 
+    // Hard ply ceiling: check extensions (depth+ply<40 guard below) and
+    // singular extensions (unbounded per-node +1) can both keep `depth`
+    // from shrinking to zero along a sufficiently forcing line (perpetual
+    // checks, king hunts -- exactly the position class both engine hangs
+    // occurred in), so `ply` itself is the only thing guaranteed to grow
+    // every single recursive call. Without this, a long enough forcing
+    // line drives `ply` past MAX_PLY (128) and the killer-table indexing
+    // below (`state.local.killers[ply as usize]`) panics with an
+    // out-of-bounds index. Under this crate's `panic = "abort"` release
+    // profile that panic doesn't unwind or get caught by rayon::scope --
+    // it aborts the entire process on whichever thread hit it, which from
+    // the UCI client's side looks exactly like a hang: stdout closes mid-
+    // `go` and the client blocks forever waiting for a `bestmove` line
+    // that will never arrive. Bailing out to a static eval one ply before
+    // the array bound is hit avoids the panic entirely and is a completely
+    // ordinary (if inelegant) terminal condition for search this deep.
+    if ply as usize >= MAX_PLY - 1 {
+        return evaluate(pos, Some(&list));
+    }
+
     let mut tt_move = Move::NULL;
     let mut tt_score_for_singular: i32 = 0;
     if let Some(entry) = state.shared.probe(pos.zobrist_key) {
         tt_move = entry.best_move;
-        tt_score_for_singular = entry.score;
+        let adjusted_score = score_from_tt(entry.score, ply);
+        tt_score_for_singular = adjusted_score;
         if entry.depth >= depth {
             match entry.bound {
-                Bound::Exact => return entry.score,
+                Bound::Exact => return adjusted_score,
                 Bound::Lower => {
-                    if entry.score > alpha {
-                        alpha = entry.score;
+                    if adjusted_score > alpha {
+                        alpha = adjusted_score;
                     }
                 }
                 Bound::Upper => {
-                    if entry.score < beta {
-                        // effectively lowers beta bound only if it beats current beta
+                    if adjusted_score < beta {
+                        beta = adjusted_score;
                     }
                 }
             }
             if alpha >= beta {
-                return entry.score;
+                return adjusted_score;
             }
         }
     }
@@ -723,7 +778,18 @@ fn negamax(pos: &mut Position, state: &mut SearchState, mut depth: i32, mut alph
         // best TT move is noisy (!tt_move.is_quiet => tt_move.flag().is_capture()).
         // Noisy current move (!is_quiet) is searched at reduced depth; if it exceeds
         // probcut_beta we return a conservative interpolated lower bound.
-        if !is_pv && !in_check && depth <= 8 && !is_quiet && !tt_move.is_null() && tt_move.flag().is_capture() {
+        //
+        // FIX: added `move_index > 0`. Every other pruning technique below this one
+        // (LMP, futility, SEE-pruning) requires at least one move to have already been
+        // searched normally at this node before pruning kicks in; this one didn't. That
+        // meant a node whose *first* ordered move (often the TT move) was a capture could
+        // return a fabricated interpolated score for the whole node from a single
+        // reduced-depth search on that one move, without ever searching any sibling move,
+        // without calling state.shared.store(), and without a genuine best_move -- i.e.
+        // exactly the "search-side bug discarding a correct line" failure mode, concentrated
+        // at depth <= 8 (near-leaf, where tactical accuracy is decided). This is a strong
+        // candidate for the reported hanging-piece blunders independent of NNUE quality.
+        if !is_pv && !in_check && depth <= 8 && !is_quiet && move_index > 0 && !tt_move.is_null() && tt_move.flag().is_capture() {
             let improving = if best_score > alpha { 1 } else { 0 };
             let probcut_beta = beta + 254 - 85 * improving;
             if static_eval >= probcut_beta {
@@ -813,7 +879,7 @@ fn negamax(pos: &mut Position, state: &mut SearchState, mut depth: i32, mut alph
     } else {
         Bound::Exact
     };
-    state.shared.store(pos.zobrist_key, depth, best_score, bound, best_move);
+    state.shared.store(pos.zobrist_key, depth, score_to_tt(best_score, ply), bound, best_move);
 
     best_score
 }
@@ -865,6 +931,44 @@ fn net_swing_after_move(pos: &mut Position, mv: Move) -> i32 {
     credit - worst_opponent_gain
 }
 
+/// Reconstructs the expected principal variation by walking the shared TT
+/// forward from `pos` through `first_move` and then whatever best_move each
+/// successive position's TT entry holds, validating legality at each step.
+/// This is best-effort (TT entries can be missing or stale from a shallower
+/// search / different node) but is far more useful for debugging than
+/// printing only the root move, which is all `pv` previously ever showed.
+fn extract_pv(pos: &Position, shared: &SharedSearch, first_move: Move, max_len: usize) -> Vec<Move> {
+    let mut pv = Vec::with_capacity(max_len.max(1));
+    if first_move.is_null() {
+        return pv;
+    }
+    let mut walk = pos.clone();
+    walk.make_move(first_move);
+    pv.push(first_move);
+    let mut seen = std::collections::HashSet::new();
+    seen.insert(walk.zobrist_key);
+    while pv.len() < max_len {
+        let entry = match shared.probe(walk.zobrist_key) {
+            Some(e) => e,
+            None => break,
+        };
+        if entry.best_move.is_null() {
+            break;
+        }
+        let mut list = MoveList::new();
+        generate_legal_moves(&walk, &mut list);
+        if !list.as_slice().iter().any(|&mv| mv == entry.best_move) {
+            break; // stale/colliding TT entry -- don't trust it past this point
+        }
+        walk.make_move(entry.best_move);
+        if !seen.insert(walk.zobrist_key) {
+            break; // would loop forever through a repeated position
+        }
+        pv.push(entry.best_move);
+    }
+    pv
+}
+
 #[allow(dead_code)]
 pub struct RootResult {
     pub best_move: Move,
@@ -896,8 +1000,63 @@ pub fn iterative_deepening<F: FnMut(&str)>(
     let mut prev_best_move = Move::NULL;
     let start_ms = now_ms();
 
+    // Persistent per-root-move search state: index i always corresponds to
+    // root_list.as_slice()[i] (root move order never changes once computed
+    // above), and this Vec lives for the whole iterative-deepening call --
+    // outside both the depth loop and the aspiration-window retry loop
+    // inside it. Previously a fresh `ThreadLocalSearch::new()` was built for
+    // every root move on every depth (and every aspiration re-search),
+    // zeroing killers/history/countermove each time; a deeper depth's
+    // search therefore always started move ordering from scratch instead of
+    // benefiting from what the previous (shallower, or failed-aspiration)
+    // search into that same subtree had just learned. Keeping one
+    // ThreadLocalSearch per root move here and reusing it call-to-call fixes
+    // that: only the truly per-call fields (nodes/deadline/go_token/
+    // rep_stack/excluded_move) get reset before each search, while the
+    // move-ordering tables carry forward.
+    let num_root_moves = root_list.count;
+    let per_root_state: Vec<std::sync::Mutex<ThreadLocalSearch>> =
+        (0..num_root_moves).map(|_| std::sync::Mutex::new(ThreadLocalSearch::new())).collect();
+
+    // Seed for repetition detection, built from the *real* game history --
+    // not just whatever this search happens to revisit on its own.
+    //
+    // `pos.undo_stack` already holds one Undo per real move played since the
+    // last UCI "position ... moves ..." replay (handle_position in uci.rs
+    // rebuilds `pos` from startpos/fen and replays the *entire* move list
+    // every time it's called), and each Undo's `prev_zobrist` is the
+    // zobrist key of the position immediately before that move was made --
+    // i.e. exactly the ancestor chain a repetition check needs. Appending
+    // `pos.zobrist_key` itself makes the current (about-to-be-searched-from)
+    // position available too, since it's a genuine ancestor of whichever
+    // root move gets played next. This is bounded by `halfmove_clock` using
+    // the same convention is_search_repetition() already uses for its own
+    // lookback (no repetition can reach back across an irreversible
+    // pawn-move/capture), so this fixes a blind spot rather than changing
+    // the repetition rule itself.
+    //
+    // Before this fix, every root search started rep_stack empty, so a
+    // position that had genuinely already occurred earlier in the real game
+    // was invisible to is_search_repetition() -- it could only ever detect
+    // a repetition the search independently replayed deep enough inside its
+    // own tree to see 3 occurrences purely internally. For a
+    // favorable-looking forcing sequence (e.g. a repeating check like
+    // Qf5+/Kg8/Qd5+/Kh7), alpha-beta pruning routinely cuts the search well
+    // short of ever revisiting the same node 3 times on its own, so the
+    // engine kept reporting a large advantage and happily repeated the
+    // position into a draw instead of recognizing and (where a
+    // non-repeating alternative existed) avoiding it.
+    let mut ancestor_keys: Vec<u64> = pos.undo_stack.iter().map(|u| u.prev_zobrist).collect();
+    ancestor_keys.push(pos.zobrist_key);
+    let look_back = pos.halfmove_clock as usize;
+    let seed_start = ancestor_keys.len().saturating_sub(look_back);
+    let rep_seed: Vec<u64> = ancestor_keys[seed_start..].to_vec();
+
     for depth in 1..=limits.max_depth {
         if state.local.stopped || STOP_FLAG.load(Ordering::Relaxed) || go_token != GO_TOKEN.load(Ordering::Relaxed) {
+            break;
+        }
+        if now_ms() >= limits.deadline_ms {
             break;
         }
 
@@ -920,38 +1079,89 @@ pub fn iterative_deepening<F: FnMut(&str)>(
 
             'aspiration: loop {
             depth_best_score = -MATE_SCORE;
-            let mut _unused_root_order = MoveOrderer::new(pos, &root_list, prev_best_move, &root_killers, Move::NULL, &state.local.history);
+            // root_moves keeps the same index-to-move mapping as
+            // per_root_state for the whole search (index i is always
+            // root_list.as_slice()[i]), so the persisted tables above stay
+            // attached to the right move across depths. spawn_order is a
+            // separate permutation of those indices, built from the history
+            // tables the search has actually accumulated so far, that
+            // decides which root move gets searched/spawned first. This
+            // replaces the old MoveOrderer call whose result was thrown away
+            // into `_unused_root_order` and which, even if used, was scoring
+            // moves against `state.local.history` -- a table nothing ever
+            // wrote to, since only per-root local searches (discarded every
+            // call) touched their own history tables.
+            let root_moves: Vec<Move> = root_list.as_slice().to_vec();
+            let mut aggregated_root_history = [[0i32; 64]; 64];
+            for slot in per_root_state.iter() {
+                let guard = slot.lock().unwrap();
+                for f in 0..64 {
+                    for t in 0..64 {
+                        aggregated_root_history[f][t] += guard.history[f][t];
+                    }
+                }
+            }
+            let mut spawn_order: Vec<usize> = (0..root_moves.len()).collect();
+            spawn_order.sort_by_key(|&i| {
+                -score_move(pos, root_moves[i], prev_best_move, &root_killers, Move::NULL, &aggregated_root_history)
+            });
             // Bounded batch 2: flat root-level split (not two-phase best-guess-first).
             // Each root move evaluated in rayon::scope; threads share SharedSearch.tt (Arc<RwLock>),
             // each gets its own ThreadLocalSearch.
-            let root_moves = root_list.as_slice().to_vec();
             let _shared_clone = state.shared.clone();
-            let results_arc = std::sync::Arc::new(std::sync::Mutex::new(vec![(Move::NULL, -MATE_SCORE); root_moves.len()]));
+            let results_arc = std::sync::Arc::new(std::sync::Mutex::new(vec![(Move::NULL, -MATE_SCORE, false); root_moves.len()]));
             let _base_pos_clone = (*pos).clone();
             #[cfg(feature = "parallel-search")]
             {
                 use rayon::prelude::*;
+                let per_root_state_ref = &per_root_state;
+                let rep_seed_ref = &rep_seed;
                 rayon::scope(|s| {
-                    for (i, m) in root_moves.iter().enumerate() {
+                    for &i in spawn_order.iter() {
                         if STOP_FLAG.load(Ordering::Relaxed) || state.local.stopped {
                             break;
                         }
+                        let m = root_moves[i];
                         let shared = _shared_clone.clone();
                         let results_ref = results_arc.clone();
                         let pos_for_this = _base_pos_clone.clone();
+                        let deadline_for_this = state.local.deadline_ms;
+                        let go_token_for_this = state.local.go_token;
                         s.spawn(move |_| {
                             let shared_for_aggregate = shared.clone();
+                            // Check this root move's persisted tables out of
+                            // per_root_state (swapping in a throwaway empty
+                            // one), reset only the per-call fields, run the
+                            // search, then check the (now further-learned)
+                            // tables back in below so the next depth/retry
+                            // starts warm instead of from zero.
+                            let mut local_tls = {
+                                let mut guard = per_root_state_ref[i].lock().unwrap();
+                                std::mem::replace(&mut *guard, ThreadLocalSearch::new())
+                            };
+                            local_tls.deadline_ms = deadline_for_this;
+                            local_tls.go_token = go_token_for_this;
+                            local_tls.stopped = false;
+                            local_tls.nodes = 0;
+                            local_tls.rep_stack.clear();
+                            local_tls.rep_stack.extend_from_slice(rep_seed_ref);
+                            local_tls.excluded_move = Move::NULL;
                             let mut local_state = SearchState {
-                                shared: shared,
-                                local: ThreadLocalSearch::new(),
+                                shared,
+                                local: local_tls,
                             };
                             let mut temp_pos = pos_for_this.clone();
-                            temp_pos.make_move(*m);
-                            let _z = temp_pos.zobrist_key;
-                            let score = -negamax(&mut temp_pos, &mut local_state, depth, -beta, -alpha, 1, *m);
-                            temp_pos.unmake_move(*m);
-                            results_ref.lock().unwrap()[i] = (*m, score);
+                            temp_pos.make_move(m);
+                            let gives_check = crate::movegen::is_in_check(&temp_pos, temp_pos.side_to_move);
+                            let child_depth = if gives_check && depth < 40 { depth } else { depth - 1 };
+                            local_state.push_rep(temp_pos.zobrist_key);
+                            let score = -negamax(&mut temp_pos, &mut local_state, child_depth, -beta, -alpha, 1, m);
+                            local_state.pop_rep();
+                            temp_pos.unmake_move(m);
+                            let this_move_stopped = local_state.local.stopped;
+                            results_ref.lock().unwrap()[i] = (m, score, this_move_stopped);
                             shared_for_aggregate.nodes_aggregate.fetch_add(local_state.local.nodes, Ordering::Relaxed);
+                            *per_root_state_ref[i].lock().unwrap() = local_state.local;
                         });
                     }
                 });
@@ -961,26 +1171,64 @@ pub fn iterative_deepening<F: FnMut(&str)>(
                 // Sequential single-threaded fallback: evaluate each root move directly
                 // without rayon spawn, sharing the same TT via cloned Arc and writing
                 // into the same results_arc so downstream aggregation is unchanged.
-                for (i, m) in root_moves.iter().enumerate() {
+                for &i in spawn_order.iter() {
                     if STOP_FLAG.load(Ordering::Relaxed) || state.local.stopped {
                         break;
                     }
+                    let m = root_moves[i];
                     let shared_for_aggregate = _shared_clone.clone();
+                    let mut local_tls = {
+                        let mut guard = per_root_state[i].lock().unwrap();
+                        std::mem::replace(&mut *guard, ThreadLocalSearch::new())
+                    };
+                    local_tls.deadline_ms = state.local.deadline_ms;
+                    local_tls.go_token = state.local.go_token;
+                    local_tls.stopped = false;
+                    local_tls.nodes = 0;
+                    local_tls.rep_stack.clear();
+                    local_tls.rep_stack.extend_from_slice(&rep_seed);
+                    local_tls.excluded_move = Move::NULL;
                     let mut local_state = SearchState {
                         shared: shared_for_aggregate.clone(),
-                        local: ThreadLocalSearch::new(),
+                        local: local_tls,
                     };
                     let mut temp_pos = _base_pos_clone.clone();
-                    temp_pos.make_move(*m);
-                    let score = -negamax(&mut temp_pos, &mut local_state, depth, -beta, -alpha, 1, *m);
-                    temp_pos.unmake_move(*m);
-                    results_arc.lock().unwrap()[i] = (*m, score);
+                    temp_pos.make_move(m);
+                    let gives_check = crate::movegen::is_in_check(&temp_pos, temp_pos.side_to_move);
+                    let child_depth = if gives_check && depth < 40 { depth } else { depth - 1 };
+                    local_state.push_rep(temp_pos.zobrist_key);
+                    let score = -negamax(&mut temp_pos, &mut local_state, child_depth, -beta, -alpha, 1, m);
+                    local_state.pop_rep();
+                    temp_pos.unmake_move(m);
+                    let this_move_stopped = local_state.local.stopped;
+                    results_arc.lock().unwrap()[i] = (m, score, this_move_stopped);
                     shared_for_aggregate.nodes_aggregate.fetch_add(local_state.local.nodes, Ordering::Relaxed);
+                    *per_root_state[i].lock().unwrap() = local_state.local;
                 }
             }
             let results = std::sync::Arc::try_unwrap(results_arc).unwrap().into_inner().unwrap();
             // Aggregate parallel results back into sequential best tracking.
-            for (m, score) in results {
+            // A root move whose thread hit its own deadline mid-search
+            // (this_move_stopped) never completed a real negamax result --
+            // time_up() short-circuited every recursive call under it to
+            // evaluate(pos, None), a raw static eval with zero search
+            // behind it. Trusting that score against moves that DID
+            // complete a full search is how a hanging-piece move can beat
+            // out the correct move: the truncated move's eval looks fine
+            // because nothing ever searched deep enough to see the
+            // refutation. So: any thread reporting stopped=true this depth
+            // means the whole depth is unreliable and must not overwrite
+            // best_move/best_score, exactly as the existing single-move
+            // `if state.local.stopped { break }` codepath already intended
+            // -- this just makes that check see per-thread stops, since
+            // the spawned threads' ThreadLocalSearch.stopped never
+            // propagated to the outer state.local.stopped before now.
+            let mut any_move_stopped = false;
+            for (m, score, this_stopped) in results {
+                if this_stopped {
+                    any_move_stopped = true;
+                    continue;
+                }
                 if score > depth_best_score {
                     depth_best_score = score;
                     depth_best_move = m;
@@ -988,6 +1236,9 @@ pub fn iterative_deepening<F: FnMut(&str)>(
                 if depth_best_score > alpha {
                     alpha = depth_best_score;
                 }
+            }
+            if any_move_stopped {
+                state.local.stopped = true;
             }
 
             if state.local.stopped {
@@ -1039,14 +1290,18 @@ pub fn iterative_deepening<F: FnMut(&str)>(
                 ));
             } else if best_score.abs() >= MATE_SCORE - 1000 {
                 let mate_in = ((MATE_SCORE - best_score.abs() + 1) / 2) * best_score.signum();
+                let pv = extract_pv(pos, &state.shared, best_move, depth as usize);
+                let pv_str: Vec<String> = pv.iter().map(|m| m.to_uci()).collect();
                 send(&format!(
                     "info depth {} score mate {} nodes {} nps {} time {} pv {}",
-                    depth, mate_in, total_nodes, nps, elapsed_ms as u64, best_move.to_uci()
+                    depth, mate_in, total_nodes, nps, elapsed_ms as u64, pv_str.join(" ")
                 ));
             } else {
+                let pv = extract_pv(pos, &state.shared, best_move, depth as usize);
+                let pv_str: Vec<String> = pv.iter().map(|m| m.to_uci()).collect();
                 send(&format!(
                     "info depth {} score cp {} nodes {} nps {} time {} pv {}",
-                    depth, best_score, total_nodes, nps, elapsed_ms as u64, best_move.to_uci()
+                    depth, best_score, total_nodes, nps, elapsed_ms as u64, pv_str.join(" ")
                 ));
             }
         } else {
