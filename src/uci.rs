@@ -54,7 +54,15 @@ pub fn handle_uci_line<F: FnMut(&str)>(state: &mut EngineState, line: &str, mut 
             send("id name WizardBot");
             send("id author Merlin2LmmL");
             send("uciok");
-            send(&format!("info string THREAD_DEBUG threading={:?} cores={:?}", cfg!(feature = "parallel-search"), std::thread::available_parallelism()));
+            #[cfg(target_arch = "wasm32")]
+            let threading_str = "false";
+            #[cfg(target_arch = "wasm32")]
+            let cores_str = "wasm (no OS threads)";
+            #[cfg(not(target_arch = "wasm32"))]
+            let threading_str = &format!("{:?}", cfg!(feature = "parallel-search"));
+            #[cfg(not(target_arch = "wasm32"))]
+            let cores_str = &format!("{:?}", std::thread::available_parallelism());
+            send(&format!("info string THREAD_DEBUG threading={} cores={:?}", threading_str, cores_str));
         }
         "isready" => {
             send("readyok");

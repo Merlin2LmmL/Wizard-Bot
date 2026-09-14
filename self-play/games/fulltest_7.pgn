@@ -1,0 +1,10 @@
+[Event "Self-play test"]
+[Site "?"]
+[Date "????.??.??"]
+[Round "?"]
+[White "engine(uci_binary)"]
+[Black "engine(uci_binary)"]
+[Result "*"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 Nf6 5. O-O Be7 6. Re1 b5 7. Bb3 d6 8. c3 Na5 9. Bc2 O-O 10. d4 exd4 11. cxd4 Bb7 12. Bd3 Nc6 13. Bd2 d5 14. e5 Ne4 15. Bxe4 dxe4 16. Rxe4 Nb4 17. Rg4 Qd7 18. Ne1 Nc6 19. Bh6 Nxe5 20. Rxg7+ Kh8 21. Qh5 Nc4 22. Nc3 b4 23. Rxf7 Rxf7 24. Qxf7 Rg8 25. Qxc4 bxc3 26. Qxc3 Bf6 27. Be3 Be4 28. Qc4 Qc8 29. Rc1 Rg7 30. Rd1 Bxg2 31. Nxg2 Rxg2+ 32. Kh1 Qf5 33. Rc1 Rg4 34. Qc6 Rg8 35. Ra1 Be7 36. Re1 Bd6 37. f4 Bxf4 38. Qf3 Qa5 39. Rf1 Bxe3 40. Qxe3 Qd5+ 41. Rf3 Rd8 42. b3 Kg8 43. Qf2 Kh8 44. Qe2 a5 45. Qe5+ Qxe5 46. dxe5 Rd1+ 47. Kg2 Re1 48. Rf5 a4 49. Kf2 Rh1 50. Kg2 Re1 51. bxa4 Re2+ 52. Rf2 Rxe5 53. Rc2 Kg8 54. Kf1 Rd5 55. Kf2 c6 56. Kf1 Rd3 57. Rxc6 Rd2 58. Kg1 Rxa2 59. Ra6 Kf7 60. Kh1 Kg7 61. a5 Kh8 62. Ra7 Ra1+ 63. Kg2 Ra2+ 64. Kg3 Kg8 65. h3 Kh8 66. Kf4 Re2 67. Kg4 Kg8 68. Kf3 Re1 69. Kf2 Ra1 70. Kg3 Rb1 71. Kf4 Re1 72. Kf3 Kh8 73. Kf2 Rb1 74. Ke2 Rh1 75. a6 Ra1 76. Kd2 Kg8 77. Kc2 Kh8 78. Kb2 Ra4 79. Kb1 Kg8 80. Kc2 Rc4+ 81. Kb2 Rb4+ 82. Ka3 Rb6 83. Ka4 Rh6 84. Ka5 Rh5+ 85. Kb4 Rh4+ 86. Kb5 Rh5+ 87. Kb6 Rh6+ 88. Kc7 Rf6 89. Ra8+ Kg7 90. a7 Rf7+ 91. Kb6 Rf6+ 92. Ka5 Rf5+ 93. Ka4 Rf4+ 94. Ka3 Rf3+ 95. Ka2 Rf2+ 96. Kb3 Rf3+ 97. Kb2 Rf2+ 98. Ka3 Rf3+ 99. Kb4 Rf4+ 100. Kb5 Rf5+ 101. Kc6 Rf6+ 102. Kd5 Ra6 103. Kc5 Kh6 104. Kb5 Ra1 105. Kb4 Kh5 106. Kb3 Kh4 107. Kb4 Kxh3 108. Kb5 Kh2 109. Kc5 Kh1 110. Kb4 Kh2 111. Kb5 Kh1 112. Kb4 Kh2 113. Kb5 Rf1 114. Rh8 Rb1+ 115. Kc5 Ra1 116. a8=Q Rxa8 117. Rxa8 Kg3 118. Rg8+ Kf3 119. Rg5 Kf4 120. Rh5 Ke3 121. Rxh7 Ke4 122. Kd6 Kd3 123. Kd5 Ke3 124. Rh4 Ke2 125. Kd4 Kf3 *
+

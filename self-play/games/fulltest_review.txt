@@ -1,0 +1,232 @@
+Self-play review -- run prefix: games/fulltest
+============================================================
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│ Game 1 review                                                           │
+├─────────────────────────────────────────────────────────────────────────┤
+│ White: 73 moves checked vs SF (43 matched top choice, 58.9%)            │
+│   avg cp lost: -41.5  accuracy: 96.1%  Elo est: ~3200 (uncalibrated)    │
+│       Best     Excellent      Good     Inaccuracy   Mistake     Blunder │
+│        43          18          9           2           1           0    │
+│ Black: 72 moves checked vs SF (23 matched top choice, 31.9%)            │
+│   avg cp lost: 21.4  accuracy: 95.8%  Elo est: ~2358 (uncalibrated)     │
+│       Best     Excellent      Good     Inaccuracy   Mistake     Blunder │
+│        23          39          7           2           1           0    │
+└─────────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────┐
+│ Game 2 review                                                           │
+├─────────────────────────────────────────────────────────────────────────┤
+│ White: 125 moves checked vs SF (45 matched top choice, 36.0%)           │
+│   avg cp lost: 20.1  accuracy: 93.9%  Elo est: ~2396 (uncalibrated)     │
+│       Best     Excellent      Good     Inaccuracy   Mistake     Blunder │
+│        45          58          9           9           1           3    │
+│ Black: 125 moves checked vs SF (35 matched top choice, 28.0%)           │
+│   avg cp lost: 17.5  accuracy: 94.2%  Elo est: ~2476 (uncalibrated)     │
+│       Best     Excellent      Good     Inaccuracy   Mistake     Blunder │
+│        35          66          9           11          4           0    │
+└─────────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────┐
+│ Game 3 review                                                           │
+├─────────────────────────────────────────────────────────────────────────┤
+│ White: 125 moves checked vs SF (34 matched top choice, 27.2%)           │
+│   avg cp lost: 25.8  accuracy: 90.6%  Elo est: ~2225 (uncalibrated)     │
+│       Best     Excellent      Good     Inaccuracy   Mistake     Blunder │
+│        34          43          25          14          9           0    │
+│ Black: 125 moves checked vs SF (35 matched top choice, 28.0%)           │
+│   avg cp lost: 22.2  accuracy: 91.7%  Elo est: ~2335 (uncalibrated)     │
+│       Best     Excellent      Good     Inaccuracy   Mistake     Blunder │
+│        35          51          22          13          3           1    │
+└─────────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────┐
+│ Game 4 review                                                           │
+├─────────────────────────────────────────────────────────────────────────┤
+│ White: 69 moves checked vs SF (35 matched top choice, 50.7%)            │
+│   avg cp lost: 9.4  accuracy: 96.5%  Elo est: ~2730 (uncalibrated)      │
+│       Best     Excellent      Good     Inaccuracy   Mistake     Blunder │
+│        35          28          1           4           1           0    │
+│ Black: 69 moves checked vs SF (30 matched top choice, 43.5%)            │
+│   avg cp lost: 9.5  accuracy: 96.5%  Elo est: ~2726 (uncalibrated)      │
+│       Best     Excellent      Good     Inaccuracy   Mistake     Blunder │
+│        30          31          3           4           1           0    │
+└─────────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────┐
+│ Game 5 review                                                           │
+├─────────────────────────────────────────────────────────────────────────┤
+│ White: 54 moves checked vs SF (34 matched top choice, 63.0%)            │
+│   avg cp lost: 65.6  accuracy: 96.2%  Elo est: ~1694 (uncalibrated)     │
+│       Best     Excellent      Good     Inaccuracy   Mistake     Blunder │
+│        34          12          5           2           1           0    │
+│ Black: 53 moves checked vs SF (21 matched top choice, 39.6%)            │
+│   avg cp lost: 98.0  accuracy: 94.0%  Elo est: ~1415 (uncalibrated)     │
+│       Best     Excellent      Good     Inaccuracy   Mistake     Blunder │
+│        21          20          6           4           2           0    │
+└─────────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────┐
+│ Game 6 review                                                           │
+├─────────────────────────────────────────────────────────────────────────┤
+│ White: 55 moves checked vs SF (28 matched top choice, 50.9%)            │
+│   avg cp lost: 16.9  accuracy: 93.9%  Elo est: ~2493 (uncalibrated)     │
+│       Best     Excellent      Good     Inaccuracy   Mistake     Blunder │
+│        28          17          4           4           2           0    │
+│ Black: 55 moves checked vs SF (19 matched top choice, 34.5%)            │
+│   avg cp lost: 12.3  accuracy: 95.1%  Elo est: ~2631 (uncalibrated)     │
+│       Best     Excellent      Good     Inaccuracy   Mistake     Blunder │
+│        19          26          5           4           1           0    │
+└─────────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────┐
+│ Game 7 review                                                           │
+├─────────────────────────────────────────────────────────────────────────┤
+│ White: 125 moves checked vs SF (58 matched top choice, 46.4%)           │
+│   avg cp lost: -25.1  accuracy: 90.9%  Elo est: ~3200 (uncalibrated)    │
+│       Best     Excellent      Good     Inaccuracy   Mistake     Blunder │
+│        58          45          5           6           1           10   │
+│ Black: 125 moves checked vs SF (58 matched top choice, 46.4%)           │
+│   avg cp lost: 45.0  accuracy: 90.3%  Elo est: ~1900 (uncalibrated)     │
+│       Best     Excellent      Good     Inaccuracy   Mistake     Blunder │
+│        58          36          12          6           7           6    │
+└─────────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────┐
+│ Game 8 review                                                           │
+├─────────────────────────────────────────────────────────────────────────┤
+│ White: 123 moves checked vs SF (65 matched top choice, 52.8%)           │
+│   avg cp lost: 39.5  accuracy: 94.9%  Elo est: ~1957 (uncalibrated)     │
+│       Best     Excellent      Good     Inaccuracy   Mistake     Blunder │
+│        65          40          9           4           3           2    │
+│ Black: 123 moves checked vs SF (56 matched top choice, 45.5%)           │
+│   avg cp lost: 100.1  accuracy: 95.1%  Elo est: ~1399 (uncalibrated)    │
+│       Best     Excellent      Good     Inaccuracy   Mistake     Blunder │
+│        56          50          8           5           2           2    │
+└─────────────────────────────────────────────────────────────────────────┘
+
+--- Possible blunders / anomalies (heuristic, verify manually) ---
+  game 1 ply 132 black Kd1      score=cp -2873 :: score dropped 898cp for the mover after their own move
+      fen_before: 8/8/4R3/6p1/1P6/8/7P/1K2k3 b - - 2 66
+  game 4 ply   1 white e4       score=None None :: score dropped 259cp for the mover after their own move
+      fen_before: rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
+  game 5 ply  94 black Ke8      score=cp -1659 :: score dropped 300cp for the mover after their own move
+      fen_before: 5k2/5b2/P2p3P/3Pr3/7Q/8/1P3PP1/6K1 b - - 6 47
+  game 5 ply  96 black Rh5      score=cp -2998 :: score dropped 1017cp for the mover after their own move
+      fen_before: 4k3/5b1P/P2p4/3Pr3/7Q/8/1P3PP1/6K1 b - - 0 48
+  game 7 ply 240 black Ke3      score=cp -1183 :: score dropped 591cp for the mover after their own move
+      fen_before: 8/7p/8/2K4R/5k2/8/8/8 b - - 6 120
+  game 7 ply 241 white Rxh7     score=cp 877 :: score dropped 306cp for the mover after their own move
+      fen_before: 8/7p/8/2K4R/8/4k3/8/8 w - - 7 121
+
+--- Live Stockfish verification ---
+  white: 342/749 moves matched Stockfish's top choice (45.7%) | avg cp lost (non-mate positions, n=704) = 13.0cp
+  black: 277/747 moves matched Stockfish's top choice (37.1%) | avg cp lost (non-mate positions, n=702) = 39.9cp
+
+  Concrete errors (cp_lost >= 150, confirmed against Stockfish's own independent eval -- not the engine's self-assessment):
+    game 8 ply 122 black Ke5      :: Stockfish's g3e3 holds 9605cp; played move drops to 600cp (9005cp lost)
+        fen_before: 8/8/p7/1p1k2b1/1P6/P2KP1r1/4R3/8 b - - 0 61
+    game 5 ply  88 black Rh5+     :: Stockfish's f7d5 holds -1223cp; played move drops to -4495cp (3272cp lost)
+        fen_before: 5k2/5b1Q/P2p3P/3Pr3/8/8/1P3PPK/8 b - - 0 44
+    game 8 ply 121 white b4       :: Stockfish's e2e1 holds -528cp; played move drops to -3559cp (3031cp lost)
+        fen_before: 8/8/p7/1p1k2b1/8/PP1KP1r1/4R3/8 w - - 1 61
+    game 1 ply 121 white Rd6      :: Stockfish's a6h6 holds 3485cp; played move drops to 1155cp (2330cp lost)
+        fen_before: 8/8/R6p/1P1n2p1/8/5k2/1P5P/1K6 w - - 1 61
+    game 5 ply  87 white Qxh7     :: Stockfish's f5f6 holds 3776cp; played move drops to 1463cp (2313cp lost)
+        fen_before: 5k2/5b1p/P2p3P/3PrQ2/8/8/1P3PPK/8 w - - 1 44
+    game 8 ply 138 black Bc5      :: Stockfish's a3a4 holds 617cp; played move drops to 7cp (610cp lost)
+        fen_before: 8/8/R7/1p2k3/Pb6/r3P3/4K3/8 b - - 2 69
+    game 7 ply 175 white Kc7      :: Stockfish's b6b7 holds 611cp; played move drops to 4cp (607cp lost)
+        fen_before: 6k1/R6p/PK5r/8/8/7P/8/8 w - - 25 88
+    game 7 ply 157 white Kb1      :: Stockfish's b2b3 holds 529cp; played move drops to 12cp (517cp lost)
+        fen_before: 7k/R6p/P7/8/r7/7P/1K6/8 w - - 7 79
+    game 7 ply 133 white Kg4      :: Stockfish's a7b7 holds 510cp; played move drops to 11cp (499cp lost)
+        fen_before: 7k/R6p/8/P7/5K2/7P/4r3/8 w - - 3 67
+    game 7 ply 226 black Rf1      :: Stockfish's h7h5 holds 0cp; played move drops to -495cp (495cp lost)
+        fen_before: R7/P6p/8/1K6/8/8/7k/r7 b - - 11 113
+    game 7 ply 166 black Rh6      :: Stockfish's b6f6 holds -5cp; played move drops to -497cp (492cp lost)
+        fen_before: 6k1/R6p/Pr6/8/K7/7P/8/8 b - - 16 83
+    game 7 ply 103 white Rf2      :: Stockfish's g2f3 holds 494cp; played move drops to 16cp (478cp lost)
+        fen_before: 7k/2p4p/8/4PR2/P7/8/P3r1KP/8 w - - 1 52
+    game 7 ply 148 black Rh1      :: Stockfish's b1b3 holds -5cp; played move drops to -466cp (461cp lost)
+        fen_before: 7k/R6p/8/P7/8/7P/4K3/1r6 b - - 18 74
+    game 7 ply  99 white Kg2      :: Stockfish's e5e6 holds 626cp; played move drops to 197cp (429cp lost)
+        fen_before: 7k/2p4p/8/4PR2/p7/1P6/P4K1P/7r w - - 2 50
+    game 7 ply  59 white Rd1      :: Stockfish's f2f3 holds 423cp; played move drops to 0cp (423cp lost)
+        fen_before: 2q4k/2p3rp/p4b2/8/2QPb3/4B3/PP3PPP/2R1N1K1 w - - 7 30
+    game 7 ply 142 black Re1      :: Stockfish's b1b5 holds -5cp; played move drops to -395cp (390cp lost)
+        fen_before: 6k1/R6p/8/P7/5K2/7P/8/1r6 b - - 12 71
+    game 7 ply 143 white Kf3      :: Stockfish's a7b7 holds 392cp; played move drops to 4cp (388cp lost)
+        fen_before: 6k1/R6p/8/P7/5K2/7P/8/4r3 w - - 13 72
+    game 7 ply 145 white Kf2      :: Stockfish's f3f4 holds 391cp; played move drops to 4cp (387cp lost)
+        fen_before: 7k/R6p/8/P7/8/5K1P/8/4r3 w - - 15 73
+    game 2 ply  95 white Nd1      :: Stockfish's a4a5 holds 527cp; played move drops to 164cp (363cp lost)
+        fen_before: 1r2k3/6p1/1r1p1pnp/1N1P4/PP3P2/2N2K2/1R4PP/8 w - - 3 48
+    game 2 ply 107 white Ne4      :: Stockfish's e3c4 holds 361cp; played move drops to 0cp (361cp lost)
+        fen_before: 1r6/3k2p1/r2p1pnp/P2P4/1P3PK1/1RN1N3/6PP/8 w - - 1 54
+    game 7 ply 130 black Kh8      :: Stockfish's a2a4 holds 0cp; played move drops to -348cp (348cp lost)
+        fen_before: 6k1/R6p/8/P7/8/6KP/r7/8 b - - 0 65
+    game 7 ply 144 black Kh8      :: Stockfish's e1e5 holds -4cp; played move drops to -338cp (334cp lost)
+        fen_before: 6k1/R6p/8/P7/8/5K1P/8/4r3 b - - 14 72
+    game 2 ply 115 white Nexd6    :: Stockfish's b4b5 holds 336cp; played move drops to 3cp (333cp lost)
+        fen_before: 1r6/r2k2p1/3p3p/P2n4/1PN1NPK1/1R6/6PP/8 w - - 0 58
+    game 7 ply  96 black a4       :: Stockfish's h8g7 holds -147cp; played move drops to -418cp (271cp lost)
+        fen_before: 7k/2p4p/8/p3PR2/8/1P6/P5KP/4r3 b - - 4 48
+    game 3 ply  54 black Qa6      :: Stockfish's c8d8 holds -79cp; played move drops to -347cp (268cp lost)
+        fen_before: 2q2rk1/r1p2ppp/3b4/2pPpN2/ppP1P3/4Q3/PP3PPP/3RR1K1 b - - 3 27
+    game 8 ply 126 black Rh3      :: Stockfish's e7g5 holds 657cp; played move drops to 389cp (268cp lost)
+        fen_before: 8/4b3/p7/1p2k3/1P6/P2KP1r1/4R3/8 b - - 4 63
+    game 7 ply 135 white Kf3      :: Stockfish's a7b7 holds 274cp; played move drops to 10cp (264cp lost)
+        fen_before: 6k1/R6p/8/P7/6K1/7P/4r3/8 w - - 5 68
+    game 7 ply  29 white Bxe4     :: Stockfish's b1c3 holds 134cp; played move drops to -112cp (246cp lost)
+        fen_before: r2q1rk1/1bp1bppp/p1n5/1p1pP3/3Pn3/3B1N2/PP1B1PPP/RN1QR1K1 w - - 1 15
+    game 2 ply  94 black Ke8      :: Stockfish's g6e7 holds -261cp; played move drops to -502cp (241cp lost)
+        fen_before: 1r3k2/6p1/1r1p1pnp/1N1P4/PP3P2/2N2K2/1R4PP/8 b - - 2 47
+    game 5 ply  85 white Qxf5     :: Stockfish's g5g7 holds 1669cp; played move drops to 1442cp (227cp lost)
+        fen_before: 5k2/4rb1p/P2p3P/3P1pQ1/8/8/1P3PPK/8 w - - 2 43
+    game 5 ply  33 white exd6     :: Stockfish's c2b3 holds 500cp; played move drops to 284cp (216cp lost)
+        fen_before: r1bq2kr/2p1bp1p/p2p3Q/1p2P3/1n1P4/5N1P/PPB2PP1/RN2R1K1 w - - 1 17
+    game 5 ply  84 black Re7      :: Stockfish's e1e8 holds -1212cp; played move drops to -1428cp (216cp lost)
+        fen_before: 5k2/5b1p/P2p3P/3P1pQ1/8/8/1P3PPK/4r3 b - - 1 42
+    game 7 ply 134 black Kg8      :: Stockfish's e2e5 holds -11cp; played move drops to -213cp (202cp lost)
+        fen_before: 7k/R6p/8/P7/6K1/7P/4r3/8 b - - 4 67
+    game 3 ply 181 white Kh5      :: Stockfish's h2h4 holds 460cp; played move drops to 260cp (200cp lost)
+        fen_before: 1r6/5p1p/3p1k2/2pPp3/1pP1P1K1/pP4R1/P4PPP/8 w - - 59 91
+    game 7 ply  69 white Ra1      :: Stockfish's f2f3 holds 276cp; played move drops to 78cp (198cp lost)
+        fen_before: 6rk/2p4p/p1Q2b2/5q2/3P4/4B3/PP3P1P/2R4K w - - 6 35
+    game 8 ply  55 white Qg3      :: Stockfish's e3g4 holds 0cp; played move drops to -193cp (193cp lost)
+        fen_before: r2r2k1/1bp5/p4q2/1p1Pp1b1/8/4N2Q/PP3PPP/3RR1K1 w - - 3 28
+    game 2 ply 108 black Ra7      :: Stockfish's a6a5 holds 0cp; played move drops to -192cp (192cp lost)
+        fen_before: 1r6/3k2p1/r2p1pnp/P2P4/1P2NPK1/1R2N3/6PP/8 b - - 2 54
+    game 3 ply 187 white Rg3      :: Stockfish's h2h4 holds 470cp; played move drops to 280cp (190cp lost)
+        fen_before: 1r6/5p2/3p2kp/2pPp3/1pP1P1K1/pP3R2/P4PPP/8 w - - 4 94
+    game 1 ply  41 white Bd5      :: Stockfish's e3d2 holds 355cp; played move drops to 171cp (184cp lost)
+        fen_before: r1b1nr1k/2p1b1pp/p7/1p2P3/3N1p2/1B2B3/PP3PPP/R2R2K1 w - - 2 21
+    game 3 ply 129 white Kb1      :: Stockfish's c1d2 holds 275cp; played move drops to 95cp (180cp lost)
+        fen_before: r7/4kp1p/3p4/2pPp3/1pP1P3/pP4R1/P4PPP/2K5 w - - 7 65
+    game 7 ply  42 black Nc4      :: Stockfish's e5g6 holds -184cp; played move drops to -359cp (175cp lost)
+        fen_before: r4r1k/1bpqbpRp/p6B/1p2n2Q/3P4/8/PP3PPP/RN2N1K1 b - - 2 21
+    game 7 ply 100 black Re1      :: Stockfish's h1a1 holds -209cp; played move drops to -383cp (174cp lost)
+        fen_before: 7k/2p4p/8/4PR2/p7/1P6/P5KP/7r b - - 3 50
+    game 8 ply 124 black Be7      :: Stockfish's e5d5 holds 720cp; played move drops to 554cp (166cp lost)
+        fen_before: 8/8/p7/1p2k1b1/1P6/P2KP1r1/8/4R3 b - - 2 62
+    game 3 ply 117 white Kg1      :: Stockfish's g3g5 holds 233cp; played move drops to 71cp (162cp lost)
+        fen_before: r7/5p1p/3p4/2pPp1rk/1pP1P3/pP1R2R1/P4PPP/7K w - - 11 59
+    game 3 ply 109 white Rd3      :: Stockfish's h2h4 holds 317cp; played move drops to 161cp (156cp lost)
+        fen_before: 8/5p1p/r2p2k1/2pPp1r1/1pP1P3/pP2RR2/P4PPP/5K2 w - - 3 55
+    game 7 ply  32 black Nb4      :: Stockfish's f7f5 holds 105cp; played move drops to -51cp (156cp lost)
+        fen_before: r2q1rk1/1bp1bppp/p1n5/1p2P3/3PR3/5N2/PP1B1PPP/RN1Q2K1 b - - 0 16
+    game 7 ply 101 white bxa4     :: Stockfish's g2f2 holds 451cp; played move drops to 295cp (156cp lost)
+        fen_before: 7k/2p4p/8/4PR2/p7/1P6/P5KP/4r3 w - - 4 51
+    game 3 ply 200 black Kf6      :: Stockfish's f7f5 holds -95cp; played move drops to -250cp (155cp lost)
+        fen_before: 1r6/4kp2/3p3p/2pPp3/1pP1P3/pP4R1/P4PPP/1K6 b - - 17 100
+    game 6 ply  67 white Qc2      :: Stockfish's b2b3 holds 203cp; played move drops to 49cp (154cp lost)
+        fen_before: 1r4k1/1qp3pp/p2p4/3P3b/8/4N3/PP1Q1PPP/4R1K1 w - - 5 34
+    game 5 ply  30 black Nb4      :: Stockfish's e7g5 holds -304cp; played move drops to -457cp (153cp lost)
+        fen_before: r1bq1k1r/2p1bp1p/p1np3p/1p2P3/3P4/5N1P/PPB2PP1/RNQ1R1K1 b - - 1 15
+    game 2 ply  58 black e4       :: Stockfish's g7g6 holds 112cp; played move drops to -39cp (151cp lost)
+        fen_before: qr1nr1k1/3b1ppp/3p1b2/1p1Pp3/1P6/1Q1B1NN1/PR2RPPP/6K1 b - - 0 29
+    game 3 ply 107 white Kf1      :: Stockfish's h2h3 holds 271cp; played move drops to 121cp (150cp lost)
+        fen_before: 8/5p1p/r2p2k1/2pPp3/1pP1P1r1/pP2RR2/P4PPP/6K1 w - - 1 54
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ Engine review (combined, symmetric self-play)                                │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ 8 game(s) x 2 colors (same engine both sides) = 1496 checked-move datapoints │
+│ uci_binary: 1496 moves checked vs SF (619 matched top choice, 41.4%)         │
+│   avg cp lost: 26.4  accuracy: 93.7%  Elo est: ~2208 (uncalibrated)          │
+│       Best     Excellent      Good     Inaccuracy   Mistake     Blunder      │
+│       619         580         139          94          40          24        │
+└──────────────────────────────────────────────────────────────────────────────┘
