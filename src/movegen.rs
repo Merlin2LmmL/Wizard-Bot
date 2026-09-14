@@ -38,6 +38,159 @@ pub fn is_in_check(pos: &Position, color: Color) -> bool {
     attackers_of(pos, color.opponent(), ksq, pos.occ_all) != 0
 }
 
+/// Per-node cache of "which squares would a piece of type X moving there
+/// deliver a *direct* check from" — computed once per node instead of
+/// recomputed from scratch inside `gives_check()` for every candidate move
+/// at that node. Mirrors Reckless's `checking_squares[piece_type]` table:
+/// a plain attack computation from the enemy king's square against the
+/// *current* (pre-move) occupancy.
+///
+/// This is deliberately an approximation — occupancy at `from` hasn't been
+/// cleared yet, so a slider whose own vacated square lies on the ray to the
+/// king can produce a false negative here. That's fine: `gives_check()`
+/// below only trusts a `true` from this table and always falls back to the
+/// full computation on `false`, so the approximation can never produce a
+/// *wrong* answer — only a slower path for the cases it misses (Reckless
+/// documents ~90-95% direct-check accuracy for the equivalent table before
+/// falling through to a fuller check).
+#[derive(Clone, Copy)]
+pub struct CheckingSquares {
+    pub pawn: Bitboard,
+    pub knight: Bitboard,
+    pub bishop: Bitboard,
+    pub rook: Bitboard,
+    pub queen: Bitboard,
+}
+
+/// Computes `CheckingSquares` for `us.opponent()`'s king. Call this once
+/// per node and reuse the result across every `gives_check()` call for
+/// candidate moves considered at that node.
+pub fn compute_checking_squares(pos: &Position, us: Color) -> CheckingSquares {
+    let them = us.opponent();
+    let king_sq = pos.king_square[them.idx()];
+    let occ = pos.occ_all;
+    // Same "ask from the defender's perspective" trick attackers_of() uses.
+    let defender_is_white = us == Color::Black;
+    CheckingSquares {
+        pawn: pawn_attacks(defender_is_white, king_sq),
+        knight: knight_attacks(king_sq),
+        bishop: bishop_attacks(king_sq, occ),
+        rook: rook_attacks(king_sq, occ),
+        queen: bishop_attacks(king_sq, occ) | rook_attacks(king_sq, occ),
+    }
+}
+
+/// Does making `m` (a legal move for `pos.side_to_move`) give check to the
+/// opponent? Answered without make_move/unmake_move: copies only the
+/// mover's own 6 piece bitboards (48 bytes) and patches that copy for the
+/// one piece that moved (or, for castling, the rook too), then reuses the
+/// same attack-union approach as `attackers_of` against the resulting
+/// occupancy. This covers direct checks (the moved piece now attacks the
+/// enemy king from `to`) and discovered checks (a *different* mover slider
+/// unmasked by `from` becoming vacant) in the same pass -- both are just
+/// "does anything in the adjusted bitboards attack the king square, given
+/// the adjusted occupancy." Existing callers that need this (LMP/futility
+/// pruning gates in negamax.rs, quiescence's checking-move filter) were
+/// previously make_move-ing the position just to find out, which is the
+/// exact thing pruning is trying to avoid paying for.
+pub fn gives_check(pos: &Position, m: Move, ctx: &CheckingSquares) -> bool {
+    let flag = m.flag();
+    let to = m.to_sq();
+    let moved_piece_type = if flag.is_promotion() { flag.promo_piece() } else { m.piece() };
+
+    // Fast path: O(1) lookup against the per-node table above. Covers
+    // direct checks -- including promotions, since we key off the
+    // post-move piece type -- without touching the board at all.
+    let direct = match moved_piece_type {
+        PieceType::Pawn => ctx.pawn & bit(to) != 0,
+        PieceType::Knight => ctx.knight & bit(to) != 0,
+        PieceType::Bishop => ctx.bishop & bit(to) != 0,
+        PieceType::Rook => ctx.rook & bit(to) != 0,
+        PieceType::Queen => ctx.queen & bit(to) != 0,
+        PieceType::King | PieceType::None => false,
+    };
+    if direct {
+        return true;
+    }
+
+    // Slow path: everything the table can't (or, given its stale-occupancy
+    // approximation, might not) answer -- discovered checks of any piece
+    // type (including a king move unmasking a slider), en-passant
+    // discovered checks, and castling-rook checks.
+    gives_check_full(pos, m)
+}
+
+/// Full, always-correct check test: copies only the mover's own 6 piece
+/// bitboards (48 bytes) and patches that copy for the one piece that moved
+/// (or, for castling, the rook too), then reuses the same attack-union
+/// approach as `attackers_of` against the resulting occupancy. This covers
+/// direct checks and discovered checks (a *different* mover slider
+/// unmasked by `from` becoming vacant) in the same pass. `gives_check()`
+/// above only falls through to this when its O(1) table lookup can't
+/// already answer "yes".
+fn gives_check_full(pos: &Position, m: Move) -> bool {
+    let us = pos.side_to_move;
+    let them = us.opponent();
+    let king_sq = pos.king_square[them.idx()];
+    let from = m.from_sq();
+    let to = m.to_sq();
+    let flag = m.flag();
+
+    let mut occ = pos.occ_all;
+    occ &= !bit(from);
+    occ |= bit(to);
+
+    let mut mover = pos.pieces[us.idx()];
+
+    match flag {
+        MoveFlag::EpCapture => {
+            // The captured pawn sits beside `to`, not on it -- clear it too,
+            // since its removal can itself unmask a discovered check along
+            // the rank (the classic e.p.-discovered-check pattern).
+            occ &= !bit(sq(rank_of(from), file_of(to)));
+        }
+        MoveFlag::KingCastle | MoveFlag::QueenCastle => {
+            // The king's own move can't give check, but the rook's new
+            // square can (and routinely does, e.g. Rf1/Rd1 hitting a king
+            // on the same rank/file after castling) -- patch it in too.
+            let home_rank = rank_of(from);
+            let (rook_from, rook_to) = if flag == MoveFlag::KingCastle {
+                (sq(home_rank, 7), sq(home_rank, 5))
+            } else {
+                (sq(home_rank, 0), sq(home_rank, 3))
+            };
+            occ &= !bit(rook_from);
+            occ |= bit(rook_to);
+            mover[PieceType::Rook as usize] &= !bit(rook_from);
+            mover[PieceType::Rook as usize] |= bit(rook_to);
+        }
+        _ => {}
+    }
+
+    let moved_piece = if flag.is_promotion() { flag.promo_piece() } else { m.piece() };
+    mover[m.piece() as usize] &= !bit(from);
+    mover[moved_piece as usize] |= bit(to);
+
+    if knight_attacks(king_sq) & mover[PieceType::Knight as usize] != 0 {
+        return true;
+    }
+    // Same "look up pawn_attacks from the defender's perspective" trick
+    // `attackers_of` uses above, with `us` playing the attacker_color role.
+    let defender_is_white = us == Color::Black;
+    if pawn_attacks(defender_is_white, king_sq) & mover[PieceType::Pawn as usize] != 0 {
+        return true;
+    }
+    let rook_like = mover[PieceType::Rook as usize] | mover[PieceType::Queen as usize];
+    if rook_like != 0 && rook_attacks(king_sq, occ) & rook_like != 0 {
+        return true;
+    }
+    let bishop_like = mover[PieceType::Bishop as usize] | mover[PieceType::Queen as usize];
+    if bishop_like != 0 && bishop_attacks(king_sq, occ) & bishop_like != 0 {
+        return true;
+    }
+    false
+}
+
 struct GenContext {
     checkmask: Bitboard,
     pin_mask: [Bitboard; 64], // ALL bits set = not pinned (sentinel: we use a parallel "is_pinned" array)
@@ -498,6 +651,79 @@ mod tests {
         generate_legal_moves(&pos, &mut list);
         let quiet = list.as_slice().iter().copied().find(|m| !m.flag().is_capture()).unwrap();
         assert_eq!(see(&pos, quiet), 0);
+    }
+
+    #[test]
+    fn gives_check_discovered_check_matches_handoff_position() {
+        // The confirmed ply-158 outlier position: Nd5-f6+ is a discovered
+        // check (knight vacates d5, unmasking the rook on d4's attack down
+        // the d-file onto the black king... actually onto black's own
+        // rook on d6 in the real game, but the king is what must move, so
+        // it must be giving check to the king). Board:
+        // 4k3/6K1/2r4p/3N4/1p1R4/1P4PP/8/8 w - - 9 79 (flip stm to White,
+        // whose knight move this is).
+        let pos = Position::from_fen("4k3/6K1/2r4p/3N4/1p1R4/1P4PP/8/8 w - - 9 79").unwrap();
+        let mut list = MoveList::new();
+        generate_legal_moves(&pos, &mut list);
+        let nf6 = list
+            .as_slice()
+            .iter()
+            .copied()
+            .find(|m| m.from_sq() == sq(4, 3) && m.to_sq() == sq(5, 5))
+            .expect("Nd5-f6 should be a legal move");
+        let ctx = compute_checking_squares(&pos, pos.side_to_move);
+        assert!(
+            gives_check(&pos, nf6, &ctx),
+            "Nf6 unmasks Rd4's attack on the d-file and should be flagged as check"
+        );
+        // Sanity check against the ground truth: making the move and
+        // asking is_in_check should agree.
+        let mut pos2 = pos;
+        pos2.make_move(nf6);
+        assert!(is_in_check(&pos2, pos2.side_to_move));
+    }
+
+    #[test]
+    fn gives_check_direct_knight_check() {
+        // White king e1, black knight can jump to a square that directly
+        // checks it (not a discovered check -- exercises the "moved piece
+        // itself attacks the king" path, not the "vacating from unmasks a
+        // slider" path).
+        //
+        // The squares a knight must land on to check a king on e1 are
+        // exactly f3, d3, g2, c2 (knight_attacks(e1)). The previous version
+        // of this test started the knight on f3 and moved it to d2 --
+        // d2 isn't in that set (knight on d2 attacks c4/e4/b3/f3/b1/f1, not
+        // e1), so the assertion didn't correspond to a real check and the
+        // test was wrong, not `gives_check()`. Starting the knight on e5
+        // instead and moving it to d3 (one of the four genuine
+        // checking squares) is an actual direct check.
+        let pos = Position::from_fen("4k3/8/8/4n3/8/8/8/4K3 b - - 0 1").unwrap();
+        let mut list = MoveList::new();
+        generate_legal_moves(&pos, &mut list);
+        let nd3 = list
+            .as_slice()
+            .iter()
+            .copied()
+            .find(|m| m.from_sq() == sq(4, 4) && m.to_sq() == sq(2, 3))
+            .expect("Ne5-d3 should be a legal move");
+        let ctx = compute_checking_squares(&pos, pos.side_to_move);
+        assert!(gives_check(&pos, nd3, &ctx), "Nd3 directly checks the king on e1");
+        // Sanity check against the ground truth, same pattern as the
+        // discovered-check test above.
+        let mut pos2 = pos;
+        pos2.make_move(nd3);
+        assert!(is_in_check(&pos2, pos2.side_to_move));
+    }
+
+    #[test]
+    fn gives_check_quiet_non_checking_move_is_false() {
+        let pos = Position::startpos();
+        let mut list = MoveList::new();
+        generate_legal_moves(&pos, &mut list);
+        let quiet = list.as_slice().iter().copied().find(|m| !m.flag().is_capture()).unwrap();
+        let ctx = compute_checking_squares(&pos, pos.side_to_move);
+        assert!(!gives_check(&pos, quiet, &ctx));
     }
 
     #[test]

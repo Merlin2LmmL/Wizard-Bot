@@ -1,5 +1,7 @@
 use crate::bitboard::*;
 use crate::zobrist;
+use crate::nnue;
+use crate::nnue::accum::Accumulator;
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 #[repr(u8)]
@@ -244,6 +246,29 @@ pub struct Position {
     pub king_square: [u8; 2],
     pub zobrist_key: u64,
     pub undo_stack: Vec<Undo>,
+    /// Persisted NNUE feature-transformer accumulators, one per absolute
+    /// perspective: `nnue_accum[0]` = WHITE's perspective, `nnue_accum[1]`
+    /// = BLACK's (matching `crate::nnue::position::{WHITE, BLACK}` /
+    /// `Color::idx()` numbering). Kept incrementally up to date across
+    /// make_move/unmake_move by `toggle_piece_feature`; only ever fully
+    /// recomputed when that perspective's own king moves (see
+    /// `nnue_dirty` below) or at construction.
+    ///
+    /// Meaningless / stale whenever NNUE isn't loaded (`crate::eval::nnue()`
+    /// returns `None`) -- nothing reads these fields in that case, since
+    /// `crate::eval::evaluate()` falls back to `classical_evaluate()`.
+    pub nnue_accum: [Accumulator; 2],
+    /// Per-perspective "needs a full refresh before next read" flag.
+    /// HalfKAv2_hm features are king-relative, so when a perspective's own
+    /// king moves, every one of that perspective's active features changes
+    /// orientation/king-bucket at once -- not just the king's own feature.
+    /// Rather than trying to incrementally re-derive every other piece's
+    /// feature index under the new king square, that perspective is simply
+    /// marked dirty and `refresh_dirty_nnue_perspectives()` recomputes it
+    /// from scratch via `compute_accumulator()` once the move is fully
+    /// applied. The *other* perspective (whose own king didn't move) still
+    /// updates incrementally as normal for the same move.
+    pub nnue_dirty: [bool; 2],
 }
 
 impl Position {
@@ -351,8 +376,11 @@ impl Position {
             king_square,
             zobrist_key: 0,
             undo_stack: Vec::with_capacity(256),
+            nnue_accum: [Accumulator::new_zeroed(), Accumulator::new_zeroed()],
+            nnue_dirty: [false, false],
         };
         pos.zobrist_key = zobrist::compute_full(&pos);
+        pos.refresh_all_nnue_accumulators();
         Ok(pos)
     }
 
@@ -462,6 +490,110 @@ impl Position {
         self.mailbox[to as usize] = Some((color, pt));
     }
 
+    /// crate::position::(Color, PieceType) -> crate::nnue::position::Piece.
+    /// Same convention as eval.rs's `to_nnue` match table (W_x = 1..6,
+    /// B_x = W_x + 8, per the doc comment on nnue/position.rs), just
+    /// expressed as arithmetic instead of a 12-arm match since it's on a
+    /// hot path now (called up to ~4 times per make_move/unmake_move,
+    /// rather than once per board square per eval() call as before).
+    #[inline(always)]
+    fn nnue_piece(color: Color, pt: PieceType) -> nnue::position::Piece {
+        use nnue::position as np;
+        let base = match pt {
+            PieceType::Pawn => np::W_PAWN,
+            PieceType::Knight => np::W_KNIGHT,
+            PieceType::Bishop => np::W_BISHOP,
+            PieceType::Rook => np::W_ROOK,
+            PieceType::Queen => np::W_QUEEN,
+            PieceType::King => np::W_KING,
+            PieceType::None => return np::NO_PIECE,
+        };
+        match color {
+            Color::White => base,
+            Color::Black => base + 8,
+        }
+    }
+
+    /// Incrementally applies (or removes) one piece's contribution to both
+    /// perspectives' NNUE accumulators, for a piece of color `color` and
+    /// type `pt` arriving at (add = true) or leaving (add = false) `square`.
+    ///
+    /// Called once per piece event during make_move/unmake_move: capture
+    /// removal, mover removal, mover placement, and (for castling) the
+    /// rook's removal + placement. Four events, each touching both
+    /// perspectives, covers every way a HalfKAv2_hm feature can toggle.
+    ///
+    /// For the perspective matching `color` when `pt == PieceType::King`,
+    /// this doesn't apply an incremental delta at all -- it marks that
+    /// perspective dirty (see the `nnue_dirty` field doc) so
+    /// `refresh_dirty_nnue_perspectives()` does a full recompute once the
+    /// move is fully applied. Both perspectives always read their *own*
+    /// `king_square`, so it does not matter whether this is called before
+    /// or after `self.king_square[..]` is updated for the current move --
+    /// the dirty/skip path is taken before that value would ever be read
+    /// for the king's own perspective, and the other perspective's king
+    /// square is untouched by this move regardless.
+    #[inline]
+    fn toggle_piece_feature(&mut self, color: Color, pt: PieceType, square: u8, add: bool) {
+        if pt == PieceType::None {
+            return;
+        }
+        let Some(evaluator) = crate::eval::nnue() else {
+            return; // NNUE not loaded -- classical_evaluate() is in use, nothing reads nnue_accum.
+        };
+        let ft = &evaluator.feature_transformer;
+        let pc = Self::nnue_piece(color, pt);
+
+        for perspective in [nnue::position::WHITE, nnue::position::BLACK] {
+            let p_idx = perspective as usize;
+            if self.nnue_dirty[p_idx] {
+                continue; // already flagged for a full refresh this move; incremental work here would be wasted
+            }
+            if color.idx() == p_idx && pt == PieceType::King {
+                self.nnue_dirty[p_idx] = true;
+                continue;
+            }
+            let ksq = self.king_square[p_idx] as u32;
+            let index = nnue::features::make_index(perspective, square as u32, pc, ksq);
+            nnue::accum::apply_feature(&mut self.nnue_accum[p_idx], ft, index, add);
+        }
+    }
+
+    /// Recomputes from scratch any perspective currently marked dirty
+    /// (i.e. whose own king moved this ply). Must be called only after the
+    /// board (mailbox, king_square, pieces/occ bitboards) is fully in its
+    /// final, consistent post-move (or post-unmake) state --
+    /// `compute_accumulator` reads the live board directly via
+    /// `crate::eval::to_nnue`.
+    ///
+    /// No-op (aside from clearing the flags) if NNUE isn't loaded.
+    fn refresh_dirty_nnue_perspectives(&mut self) {
+        if !self.nnue_dirty[0] && !self.nnue_dirty[1] {
+            return;
+        }
+        let Some(evaluator) = crate::eval::nnue() else {
+            self.nnue_dirty = [false, false];
+            return;
+        };
+        let ft = &evaluator.feature_transformer;
+        let nnue_pos = crate::eval::to_nnue(self);
+        for perspective in [nnue::position::WHITE, nnue::position::BLACK] {
+            let p_idx = perspective as usize;
+            if self.nnue_dirty[p_idx] {
+                self.nnue_accum[p_idx] = nnue::accum::compute_accumulator(ft, &nnue_pos, perspective);
+                self.nnue_dirty[p_idx] = false;
+            }
+        }
+    }
+
+    /// Unconditional full refresh of both perspectives, regardless of the
+    /// current dirty flags. Used only at construction (`from_fen`), where
+    /// there is no prior incremental state to preserve.
+    fn refresh_all_nnue_accumulators(&mut self) {
+        self.nnue_dirty = [true, true];
+        self.refresh_dirty_nnue_perspectives();
+    }
+
     pub fn make_move(&mut self, m: Move) {
         let us = self.side_to_move;
         let them = us.opponent();
@@ -494,6 +626,7 @@ impl Position {
         // is not on `to`)
         if flag == MoveFlag::EpCapture {
             let cap_sq = sq(rank_of(from), file_of(to));
+            self.toggle_piece_feature(them, PieceType::Pawn, cap_sq, false);
             self.remove_piece(them, PieceType::Pawn, cap_sq);
             self.zobrist_key ^= zobrist::piece_key(them, PieceType::Pawn, cap_sq);
         } else if flag.is_capture() {
@@ -502,16 +635,19 @@ impl Position {
                 cap_pt != PieceType::None,
                 "make_move: capture-flagged move with no captured piece: {m:?}"
             );
+            self.toggle_piece_feature(them, cap_pt, to, false);
             self.remove_piece(them, cap_pt, to);
             self.zobrist_key ^= zobrist::piece_key(them, cap_pt, to);
         }
 
         // Move the piece itself (remove from `from`, then place - possibly
         // promoted - piece on `to`)
+        self.toggle_piece_feature(us, piece, from, false);
         self.remove_piece(us, piece, from);
         self.zobrist_key ^= zobrist::piece_key(us, piece, from);
 
         let final_piece = if flag.is_promotion() { flag.promo_piece() } else { piece };
+        self.toggle_piece_feature(us, final_piece, to, true);
         self.put_piece(us, final_piece, to);
         self.zobrist_key ^= zobrist::piece_key(us, final_piece, to);
 
@@ -527,6 +663,8 @@ impl Position {
                     Color::Black => (sq(7, 7), sq(7, 5)),
                 };
                 self.zobrist_key ^= zobrist::piece_key(us, PieceType::Rook, rook_from);
+                self.toggle_piece_feature(us, PieceType::Rook, rook_from, false);
+                self.toggle_piece_feature(us, PieceType::Rook, rook_to, true);
                 self.move_piece(us, PieceType::Rook, rook_from, rook_to);
                 self.zobrist_key ^= zobrist::piece_key(us, PieceType::Rook, rook_to);
             }
@@ -536,6 +674,8 @@ impl Position {
                     Color::Black => (sq(7, 0), sq(7, 3)),
                 };
                 self.zobrist_key ^= zobrist::piece_key(us, PieceType::Rook, rook_from);
+                self.toggle_piece_feature(us, PieceType::Rook, rook_from, false);
+                self.toggle_piece_feature(us, PieceType::Rook, rook_to, true);
                 self.move_piece(us, PieceType::Rook, rook_from, rook_to);
                 self.zobrist_key ^= zobrist::piece_key(us, PieceType::Rook, rook_to);
             }
@@ -562,6 +702,11 @@ impl Position {
         if us == Color::Black {
             self.fullmove_number += 1;
         }
+
+        // Board (mailbox/king_square/occupancy) is now fully in its
+        // post-move state; safe to recompute any perspective flagged
+        // dirty by a king move above.
+        self.refresh_dirty_nnue_perspectives();
 
         self.undo_stack.push(undo);
     }
@@ -603,7 +748,9 @@ impl Position {
         let piece = m.piece();
 
         let final_piece = if flag.is_promotion() { flag.promo_piece() } else { piece };
+        self.toggle_piece_feature(us, final_piece, to, false);
         self.remove_piece(us, final_piece, to);
+        self.toggle_piece_feature(us, piece, from, true);
         self.put_piece(us, piece, from);
 
         if piece == PieceType::King {
@@ -616,6 +763,8 @@ impl Position {
                     Color::White => (sq(0, 7), sq(0, 5)),
                     Color::Black => (sq(7, 7), sq(7, 5)),
                 };
+                self.toggle_piece_feature(us, PieceType::Rook, rook_to, false);
+                self.toggle_piece_feature(us, PieceType::Rook, rook_from, true);
                 self.move_piece(us, PieceType::Rook, rook_to, rook_from);
             }
             MoveFlag::QueenCastle => {
@@ -623,10 +772,13 @@ impl Position {
                     Color::White => (sq(0, 0), sq(0, 3)),
                     Color::Black => (sq(7, 0), sq(7, 3)),
                 };
+                self.toggle_piece_feature(us, PieceType::Rook, rook_to, false);
+                self.toggle_piece_feature(us, PieceType::Rook, rook_from, true);
                 self.move_piece(us, PieceType::Rook, rook_to, rook_from);
             }
             MoveFlag::EpCapture => {
                 let cap_sq = sq(rank_of(from), file_of(to));
+                self.toggle_piece_feature(them, PieceType::Pawn, cap_sq, true);
                 self.put_piece(them, PieceType::Pawn, cap_sq);
             }
             _ => {
@@ -635,6 +787,7 @@ impl Position {
                         m.captured() != PieceType::None,
                         "unmake_move: capture-flagged move with no captured piece: {m:?}"
                     );
+                    self.toggle_piece_feature(them, m.captured(), to, true);
                     self.put_piece(them, m.captured(), to);
                 }
             }
@@ -645,6 +798,17 @@ impl Position {
         self.ep_square = undo.prev_ep;
         self.halfmove_clock = undo.prev_halfmove;
         self.zobrist_key = undo.prev_zobrist;
+
+        // Same reasoning as make_move: board is fully back in its pre-move
+        // state now, safe to recompute any perspective a king move flagged
+        // dirty. Recomputing here (rather than storing/restoring a saved
+        // accumulator in Undo) works because compute_accumulator is a pure
+        // function of board state -- any full refresh of a given position
+        // yields the same bit-for-bit accumulator regardless of how it was
+        // reached (see the comment on that invariant in nnue/accum.rs), so
+        // this necessarily reproduces the exact pre-move accumulator for
+        // that perspective.
+        self.refresh_dirty_nnue_perspectives();
     }
 
     pub fn make_null_move(&mut self) -> Option<u8> {
@@ -655,6 +819,10 @@ impl Position {
         self.ep_square = None;
         self.zobrist_key ^= zobrist::side_key();
         self.side_to_move = self.side_to_move.opponent();
+        // No piece moves on a null move, so the board -- and therefore
+        // both NNUE accumulators -- are untouched. Only side_to_move
+        // flips, which evaluate() already accounts for when picking
+        // perspective ordering.
         prev_ep
     }
 
@@ -679,5 +847,94 @@ impl Position {
             | self.pieces[c][PieceType::Rook as usize]
             | self.pieces[c][PieceType::Queen as usize])
             != 0
+    }
+}
+
+#[cfg(test)]
+mod nnue_accum_tests {
+    use super::*;
+    use crate::movegen;
+
+    /// The round-trip test the incremental-accumulator design flagged as
+    /// the thing most likely to hide a subtle sign/ordering bug: for a
+    /// range of positions (including castling, en passant, promotion, and
+    /// king moves specifically, since those take the full-refresh path
+    /// instead of the incremental one), make_move followed by unmake_move
+    /// must reproduce the pre-move accumulator bit-for-bit -- not just an
+    /// eval() score that happens to match.
+    ///
+    /// Skips (rather than failing) if the NNUE network isn't loaded in
+    /// this environment, since nnue_accum is meaningless without it.
+    fn assert_round_trip(fen: &str) {
+        if crate::eval::nnue().is_none() {
+            return;
+        }
+        let mut pos = Position::from_fen(fen).expect("valid FEN");
+        let mut list = MoveList::new();
+        movegen::generate_legal_moves(&pos, &mut list);
+
+        for &m in list.as_slice() {
+            let before_white = pos.nnue_accum[0].accumulation;
+            let before_white_psqt = pos.nnue_accum[0].psqt_accumulation;
+            let before_black = pos.nnue_accum[1].accumulation;
+            let before_black_psqt = pos.nnue_accum[1].psqt_accumulation;
+
+            pos.make_move(m);
+            pos.unmake_move(m);
+
+            assert_eq!(
+                pos.nnue_accum[0].accumulation, before_white,
+                "WHITE accumulation mismatch after make/unmake {} on {}",
+                m.to_uci(),
+                fen
+            );
+            assert_eq!(
+                pos.nnue_accum[0].psqt_accumulation, before_white_psqt,
+                "WHITE psqt mismatch after make/unmake {} on {}",
+                m.to_uci(),
+                fen
+            );
+            assert_eq!(
+                pos.nnue_accum[1].accumulation, before_black,
+                "BLACK accumulation mismatch after make/unmake {} on {}",
+                m.to_uci(),
+                fen
+            );
+            assert_eq!(
+                pos.nnue_accum[1].psqt_accumulation, before_black_psqt,
+                "BLACK psqt mismatch after make/unmake {} on {}",
+                m.to_uci(),
+                fen
+            );
+        }
+    }
+
+    #[test]
+    fn round_trip_startpos() {
+        assert_round_trip("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+    }
+
+    #[test]
+    fn round_trip_castling_rights_available() {
+        // Both sides can castle either way; also covers ordinary captures
+        // and quiet moves among developed pieces.
+        assert_round_trip("r3k2r/pppq1ppp/2n1bn2/2bpp3/2BPP3/2N1BN2/PPPQ1PPP/R3K2R w KQkq - 4 8");
+    }
+
+    #[test]
+    fn round_trip_en_passant_available() {
+        assert_round_trip("rnbqkbnr/ppp1p1pp/8/3pPp2/8/8/PPPP1PPP/RNBQKBNR w KQkq f6 0 4");
+    }
+
+    #[test]
+    fn round_trip_promotion_available() {
+        assert_round_trip("8/1P6/2k5/8/8/2K5/6p1/8 w - - 0 1");
+    }
+
+    #[test]
+    fn round_trip_king_in_center() {
+        // King moves (the full-refresh path) dominate the legal move list
+        // here, for both perspectives across successive plies.
+        assert_round_trip("8/8/4k3/8/4K3/8/8/8 w - - 0 1");
     }
 }

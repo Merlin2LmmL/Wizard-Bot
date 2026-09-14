@@ -1,0 +1,50 @@
+Analysis: Stockfish 16 ground truth for plies 73-84 and note ply 95
+Nodes target: 5000000
+Stockfish binary: /home/merlin2lmml/Downloads/wizardbot_engine/Stockfish/src/stockfish
+--------------------------------------------------------------------------------
+ Ply    SAN    UCI     BestBefore  ScoreBefore  ScoreAfterMover  CP_Loss Flagged
+  73    Qb7   e7b7           e7d7         -556            -3471     2915       Y
+  74    Rg2   g6g2           g6g2         3471             3713     -242       N
+  75    Re2   e4e2           e4e2        -3713            -1646    -2067       N
+  76   Qxb7   f3b7           f3b7         1646             1945     -299       N
+  77    Rc3   c1c3           c1c3        -1945            -1458     -487       N
+  78    Rg5   g2g5           g2h2         1458             1353      105       N
+  79     f3   f2f3           f1e1        -1353          -100000    98647       Y
+  80     b4   b5b4           b7d5       100000           140000   -40000       N
+  81    Rd3   c3d3           h2h4      -140000           -90000   -50000       N
+  82     c4   c5c4           c5c4        90000            80000    10000       Y
+  83    Ke1   f1e1           d3e3       -80000           -50000   -30000       N
+  84   cxd3   c4d3           c4d3        50000            40000    10000       Y
+--------------------------------------------------------------------------------
+Ply 95 direct CSV note:
+  white Kc2, depth=18, nodes=62
+--------------------------------------------------------------------------------
+Flagged plies full detail:
+Ply 73 white SAN=Qb7 UCI=e7b7
+  FEN BEFORE: 8/4Q1pk/p5rp/1pp1P3/P3Rp2/5q2/1P3P1P/2R2K2 w - - 0 37
+  FEN AFTER:  8/1Q4pk/p5rp/1pp1P3/P3Rp2/5q2/1P3P1P/2R2K2 b - - 1 37
+  Best before PV/UCI: e7d7
+  Score before (mover): -556 cp
+  Score after actual (from mover): -3471 cp
+  CP LOSS = 2915
+Ply 79 white SAN=f3 UCI=f2f3
+  FEN BEFORE: 8/1q4pk/p6p/1pp1P1r1/P4p2/2R5/1P2RP1P/5K2 w - - 2 40
+  FEN AFTER:  8/1q4pk/p6p/1pp1P1r1/P4p2/2R2P2/1P2R2P/5K2 b - - 0 40
+  Best before PV/UCI: f1e1
+  Score before (mover): -1353 cp
+  Score after actual (from mover): -100000 cp
+  CP LOSS = 98647
+Ply 82 black SAN=c4 UCI=c5c4
+  FEN BEFORE: 8/1q4pk/p6p/2p1P1r1/Pp3p2/3R1P2/1P2R2P/5K2 b - - 1 41
+  FEN AFTER:  8/1q4pk/p6p/4P1r1/Ppp2p2/3R1P2/1P2R2P/5K2 w - - 0 42
+  Best before PV/UCI: c5c4
+  Score before (mover): 90000 cp
+  Score after actual (from mover): 80000 cp
+  CP LOSS = 10000
+Ply 84 black SAN=cxd3 UCI=c4d3
+  FEN BEFORE: 8/1q4pk/p6p/4P1r1/Ppp2p2/3R1P2/1P2R2P/4K3 b - - 1 42
+  FEN AFTER:  8/1q4pk/p6p/4P1r1/Pp3p2/3p1P2/1P2R2P/4K3 w - - 0 43
+  Best before PV/UCI: c4d3
+  Score before (mover): 50000 cp
+  Score after actual (from mover): 40000 cp
+  CP LOSS = 10000

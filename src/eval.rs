@@ -138,7 +138,14 @@ const MAX_PHASE: i32 = 24;
 
 
 // Adapter: crate::position::Position -> nnue::position::Position
-fn to_nnue(pos: &crate::position::Position) -> crate::nnue::position::Position {
+//
+// pub(crate): still used here by transform()/evaluate() indirectly via
+// NnueEvaluator::evaluate(), but also now called from
+// crate::position::Position::refresh_dirty_nnue_perspectives() /
+// refresh_all_nnue_accumulators(), which need to build a fresh
+// nnue::position::Position whenever a king move forces a full accumulator
+// refresh for that perspective.
+pub(crate) fn to_nnue(pos: &crate::position::Position) -> crate::nnue::position::Position {
     let mut board = [crate::nnue::position::NO_PIECE; 64];
     let mut king_square = [0u32; 2];
     for s in 0..64u8 {
@@ -198,7 +205,13 @@ fn nnue_result() -> &'static Result<NnueEvaluator, String> {
     EVAL.get_or_init(load_nnue)
 }
 
-fn nnue() -> Option<&'static NnueEvaluator> {
+/// pub(crate): crate::position::Position now also calls this directly --
+/// both to reach `.feature_transformer` for incremental accumulator
+/// updates (`toggle_piece_feature`) and full refreshes on king moves
+/// (`refresh_dirty_nnue_perspectives`), and to decide whether NNUE is even
+/// loaded (if not, accumulator bookkeeping is skipped entirely and
+/// classical_evaluate() is used, same as before).
+pub(crate) fn nnue() -> Option<&'static NnueEvaluator> {
     nnue_result().as_ref().ok()
 }
 
@@ -259,12 +272,27 @@ fn classical_evaluate(pos: &Position) -> i32 {
     (mg_score * phase + eg_score * (MAX_PHASE - phase)) / MAX_PHASE
 }
 
+/// PERF: previously built a fresh `nnue::position::Position` and ran a full
+/// accumulator refresh (both perspectives) on every single call -- the
+/// call site the incremental-accumulator work targeted. Now reads
+/// `pos.nnue_accum[WHITE]` / `pos.nnue_accum[BLACK]`, which
+/// `crate::position::Position` keeps current incrementally across
+/// make_move/unmake_move (full refresh only on king moves; see
+/// `Position::toggle_piece_feature`). No behavior change -- same raw score,
+/// same `* 100 / 328` centipawn scaling -- purely how the accumulators get
+/// there.
 pub fn evaluate(pos: &Position, mobility_moves: Option<&MoveList>) -> i32 {
     let _ = mobility_moves; // reserved for future mobility terms
     match nnue() {
         Some(evaluator) => {
-            let nnue_pos = to_nnue(pos);
-            let raw = evaluator.evaluate(&nnue_pos);
+            let stm: u32 = if pos.side_to_move == Color::White { 0 } else { 1 };
+            let piece_count = pos.occ_all.count_ones();
+            let raw = evaluator.evaluate_with_accumulators(
+                &pos.nnue_accum[0],
+                &pos.nnue_accum[1],
+                stm,
+                piece_count,
+            );
             raw * 100 / 328
         }
         None => classical_evaluate(pos),

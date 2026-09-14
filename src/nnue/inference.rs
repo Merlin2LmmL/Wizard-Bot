@@ -185,24 +185,29 @@ impl NnueEvaluator {
         Self::load_from_bytes(&data)
     }
 
+    /// Shared tail end of both `transform()` and `transform_from_accumulators()`:
+    /// combines a pair of already-computed per-perspective accumulators
+    /// (indexed by absolute perspective, [WHITE, BLACK]) plus a
+    /// side-to-move-relative ordering into the psqt value and the
+    /// 1536-wide transformed feature vector fc_0 reads.
+    ///
     /// FeatureTransformer::transform(pos, output, bucket), scalar branch.
     /// Stockfish/src/nnue/nnue_feature_transformer.h:274-336 (the `#else`
     /// arm at 318-328; the `#if defined(VECTOR)` arm is SIMD-only and
     /// skipped per the scalar-only translation rule).
-    ///
-    /// Returns (psqt_value, transformed_features[1536]).
-    fn transform(&self, pos: &Position) -> (i32, [u8; HALF_DIMENSIONS]) {
-        let acc_white = accum::compute_accumulator(&self.feature_transformer, pos, WHITE);
-        let acc_black = accum::compute_accumulator(&self.feature_transformer, pos, BLACK);
-
+    fn transform_from_accumulators(
+        &self,
+        acc_white: &accum::Accumulator,
+        acc_black: &accum::Accumulator,
+        side_to_move: usize, // 0 = WHITE, 1 = BLACK
+        bucket: usize,
+    ) -> (i32, [u8; HALF_DIMENSIONS]) {
         let accumulation = [&acc_white.accumulation, &acc_black.accumulation];
         let psqt_accumulation = [&acc_white.psqt_accumulation, &acc_black.psqt_accumulation];
 
-        let stm = pos.side_to_move as usize;
+        let stm = side_to_move;
         let opp = 1 - stm;
         let perspectives = [stm, opp];
-
-        let bucket = self.current_layer_stack_bucket(pos);
 
         // psqt = (psqtAccumulation[perspectives[0]][bucket] - psqtAccumulation[perspectives[1]][bucket]) / 2
         let psqt = (psqt_accumulation[perspectives[0]][bucket]
@@ -224,6 +229,19 @@ impl NnueEvaluator {
         (psqt, output)
     }
 
+    /// Builds both perspectives' accumulators from scratch via
+    /// `compute_accumulator` (a full refresh), then delegates to
+    /// `transform_from_accumulators`. This is the one-shot path: still
+    /// used by `evaluate()` below, and by anything else (tests, tooling)
+    /// that only has a bare `Position` and no persisted accumulator state
+    /// to reuse.
+    fn transform(&self, pos: &Position) -> (i32, [u8; HALF_DIMENSIONS]) {
+        let acc_white = accum::compute_accumulator(&self.feature_transformer, pos, WHITE);
+        let acc_black = accum::compute_accumulator(&self.feature_transformer, pos, BLACK);
+        let bucket = self.current_layer_stack_bucket(pos);
+        self.transform_from_accumulators(&acc_white, &acc_black, pos.side_to_move as usize, bucket)
+    }
+
     fn current_layer_stack_bucket(&self, pos: &Position) -> usize {
         // Stockfish/src/nnue/evaluate_nnue.cpp:165:
         //   const int bucket = (pos.count<ALL_PIECES>() - 1) / 4;
@@ -235,9 +253,47 @@ impl NnueEvaluator {
     /// perspective of the side to move -- matching what our added debug
     /// UCI command `nnueraw` in the reference Stockfish binary prints via
     /// `Eval::NNUE::evaluate(pos, false)`.
+    ///
+    /// Unchanged from before: still builds a full `nnue::position::Position`
+    /// and refreshes both accumulators from scratch every call. Kept as-is
+    /// (rather than folded into `evaluate_with_accumulators`) so existing
+    /// one-shot callers -- tests included -- see no behavior or signature
+    /// change.
     pub fn evaluate(&self, pos: &Position) -> i32 {
         let bucket = self.current_layer_stack_bucket(pos);
         let (psqt, transformed_features) = self.transform(pos);
+        let positional = self.networks[bucket].propagate(&transformed_features);
+        (psqt + positional) / OUTPUT_SCALE
+    }
+
+    /// Same as `evaluate`, but takes already-computed per-perspective
+    /// accumulators instead of rebuilding a `nnue::position::Position` and
+    /// running `compute_accumulator` fresh on every call.
+    ///
+    /// This is the entry point the incremental-accumulator path in
+    /// `crate::position::Position` uses: `nnue_accum[WHITE]` /
+    /// `nnue_accum[BLACK]` there are kept up to date incrementally across
+    /// make_move/unmake_move (see `Position::toggle_piece_feature` and
+    /// `Position::refresh_dirty_nnue_perspectives`), so evaluation just
+    /// reads them instead of recomputing from scratch on every node.
+    ///
+    /// `side_to_move` and `piece_count` are the only remaining values this
+    /// needs that used to come from a full `nnue::position::Position` --
+    /// both are cheap for the caller to supply directly.
+    pub fn evaluate_with_accumulators(
+        &self,
+        accum_white: &accum::Accumulator,
+        accum_black: &accum::Accumulator,
+        side_to_move: u32, // 0 = WHITE, 1 = BLACK, matches nnue::position::{WHITE, BLACK}
+        piece_count: u32,
+    ) -> i32 {
+        let bucket = ((piece_count as i32 - 1) / 4) as usize;
+        let (psqt, transformed_features) = self.transform_from_accumulators(
+            accum_white,
+            accum_black,
+            side_to_move as usize,
+            bucket,
+        );
         let positional = self.networks[bucket].propagate(&transformed_features);
         (psqt + positional) / OUTPUT_SCALE
     }

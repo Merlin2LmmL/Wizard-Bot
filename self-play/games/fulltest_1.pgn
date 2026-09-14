@@ -1,0 +1,10 @@
+[Event "Self-play test"]
+[Site "?"]
+[Date "????.??.??"]
+[Round "?"]
+[White "engine(uci_binary)"]
+[Black "engine(uci_binary)"]
+[Result "1-0"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 Nf6 5. O-O Be7 6. Re1 b5 7. Bb3 d6 8. c3 Na5 9. Bc2 O-O 10. d4 exd4 11. cxd4 Bb7 12. Nbd2 Nc6 13. Nb3 Bc8 14. e5 dxe5 15. dxe5 Qxd1 16. Rxd1 Ne8 17. Be3 f5 18. Nbd4 Nxd4 19. Nxd4 f4 20. Bb3+ Kh8 21. Bd5 fxe3 22. Bxa8 Rxf2 23. Nc6 Bc5 24. Rd8 e2 25. Nd4 Rf8 26. Bf3 Be6 27. Bxe2 Kg8 28. Kh1 Bxd4 29. Rxd4 Rf5 30. Re4 Bd5 31. Re3 Rg5 32. Bf3 Bxf3 33. gxf3 Kf7 34. Rc1 Rg6 35. Rc2 Ke7 36. Re4 Kf7 37. Rh4 Kg8 38. f4 Rb6 39. Kg2 b4 40. Rc5 h6 41. Kf2 Kf8 42. Rh3 Ke7 43. Rg3 Kf7 44. Ke2 Ke6 45. Rxc7 b3 46. axb3 Nxc7 47. Rg6+ Kf5 48. Rxb6 Nd5 49. Rxa6 Nxf4+ 50. Kf3 Kxe5 51. Ra5+ Nd5 52. Ra7 g6 53. Ke2 Ke4 54. Kd2 Kd4 55. Kc1 Kd3 56. Ra4 Ke3 57. Kb1 Kf3 58. Ra6 Nf4 59. b4 g5 60. b5 Nd5 61. Rd6 Ke4 62. Rxh6 Ke3 63. b6 Nxb6 64. Rxb6 Kf2 65. b4 Ke1 66. Re6+ Kd1 67. b5 Kd2 68. b6 Kc3 69. b7 Kd2 70. b8=Q Kd3 71. Qb4 g4 72. Kb2 g3 73. Qc3# 1-0
+

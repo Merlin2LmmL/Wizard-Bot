@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Live self-play board</title>
+  <style>
+    body { display: flex; justify-content: center; align-items: center;
+           height: 100vh; margin: 0; background: #222; font-family: sans-serif; }
+    #board { max-width: 90vmin; }
+  </style>
+</head>
+<body>
+  <img id="board" src="live_board.svg">
+  <script>
+    // Re-fetch the SVG every 500ms, cache-busted, without a full page reload
+    setInterval(() => {
+      document.getElementById('board').src = 'live_board.svg?t=' + Date.now();
+    }, 500);
+  </script>
+</body>
+</html>

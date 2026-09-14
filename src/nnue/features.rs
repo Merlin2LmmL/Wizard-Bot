@@ -112,10 +112,65 @@ pub const DIMENSIONS: u32 = SQUARE_NB as u32 * PS_NB / 2;
 /// Stockfish/src/nnue/features/half_ka_v2_hm.h:122
 pub const MAX_ACTIVE_DIMENSIONS: usize = 32;
 
+/// Fixed-capacity, stack-allocated replacement for the `Vec<u32>` this used
+/// to collect active feature indices into.
+///
+/// PERF FIX: `append_active_indices` runs twice per `evaluate()` call (once
+/// per perspective) and `evaluate()` itself is called from nearly every
+/// search node (every static eval in negamax.rs's reverse-futility/futility
+/// margins, every quiescence stand-pat). With `MAX_ACTIVE_DIMENSIONS` fixed
+/// at compile time, there is no reason this needs a heap allocation at
+/// all -- the old `Vec::with_capacity(32)` in accum.rs still pays for one
+/// per call regardless of the pre-reserved capacity (allocation, not
+/// reallocation, was always the cost here). Under `parallel-search`,
+/// multiple root-move threads were also all hitting the global allocator
+/// concurrently for this same tiny, short-lived buffer on every node. A
+/// plain `[u32; 32]` + length counter removes this entirely; this is purely
+/// a representation change, the values pushed and their order are
+/// identical to before.
+pub struct ActiveIndices {
+    data: [u32; MAX_ACTIVE_DIMENSIONS],
+    len: usize,
+}
+
+impl ActiveIndices {
+    #[inline]
+    pub fn new() -> Self {
+        ActiveIndices { data: [0; MAX_ACTIVE_DIMENSIONS], len: 0 }
+    }
+
+    #[inline]
+    fn push(&mut self, v: u32) {
+        debug_assert!(
+            self.len < MAX_ACTIVE_DIMENSIONS,
+            "more than MAX_ACTIVE_DIMENSIONS active features"
+        );
+        self.data[self.len] = v;
+        self.len += 1;
+    }
+
+    #[inline]
+    pub fn as_slice(&self) -> &[u32] {
+        &self.data[..self.len]
+    }
+
+    #[inline]
+    pub fn len(&self) -> usize {
+        self.len
+    }
+}
+
 /// Index of a feature for a given king position and another piece on some square.
 /// Stockfish/src/nnue/features/half_ka_v2_hm.cpp:28-31
+///
+/// `pub(crate)`, not private: this used to only ever be called from
+/// `append_active_indices` below (looping over every occupied square for a
+/// full refresh). `Position::toggle_piece_feature` (in `crate::position`)
+/// now also calls it directly, once per piece event during
+/// make_move/unmake_move, to compute the single feature index that needs
+/// an incremental += or -= instead of rebuilding the whole active set.
 #[inline]
-fn make_index(perspective: Color, s: Square, pc: Piece, ksq: Square) -> u32 {
+pub(crate) fn make_index(perspective: Color, s: Square, pc: Piece, ksq: Square) -> u32 {
     let oriented = (s as i32) ^ ORIENT_TBL[perspective as usize][ksq as usize];
     let piece_sq_index = PIECE_SQUARE_INDEX[perspective as usize][pc as usize] as i32;
     let king_bucket = KING_BUCKETS[perspective as usize][ksq as usize];
@@ -124,7 +179,7 @@ fn make_index(perspective: Color, s: Square, pc: Piece, ksq: Square) -> u32 {
 
 /// Get a list of indices for active features.
 /// Stockfish/src/nnue/features/half_ka_v2_hm.cpp:34-46
-pub fn append_active_indices(pos: &Position, perspective: Color, active: &mut Vec<u32>) {
+pub fn append_active_indices(pos: &Position, perspective: Color, active: &mut ActiveIndices) {
     let ksq = pos.king_square(perspective);
     for s in 0..64 {
         if pos.piece_on(s as u32) != NO_PIECE {
