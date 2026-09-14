@@ -1,0 +1,34 @@
+2026-09-14 21:58:35,504 ==============================================================================
+2026-09-14 21:58:35,504 [VaKOP60s] turkjs (1637) vs PlayAgainstMyBot (1548)  |  rated Standard  |  3000+0  |  playing black
+2026-09-14 21:58:35,504 ==============================================================================
+2026-09-14 21:58:36,746 [VaKOP60s] #1   Black g8f6   d-     n-      nps-      eval-        0.7s
+2026-09-14 21:58:37,042 [VaKOP60s] #2   Black d7d5   d-     n-      nps-      eval-        0.2s
+2026-09-14 21:58:37,491 [VaKOP60s] #3   Black e7e6   d-     n-      nps-      eval-        0.1s
+2026-09-14 21:58:46,644 [VaKOP60s] #4   Black f8b4   d16    n41.5M  nps4.6M   eval+0.00    8.9s
+2026-09-14 21:58:55,276 [VaKOP60s] #5   Black b4a5   d16    n31.8M  nps5.4M   eval-0.23    8.5s
+2026-09-14 21:59:03,468 [VaKOP60s] #6   Black b8c6   d15    n13.8M  nps4.6M   eval-0.32    8.0s
+2026-09-14 21:59:11,180 [VaKOP60s] #7   Black c8d7   d15    n64.8M  nps8.5M   eval-0.30    7.6s
+2026-09-14 21:59:18,525 [VaKOP60s] #8   Black d8c8   d14    n61.0M  nps8.6M   eval-0.35    7.2s
+2026-09-14 21:59:26,759 [VaKOP60s] #9   Black a7a6   d15    n30.4M  nps5.5M   eval-1.86    6.9s
+2026-09-14 21:59:35,826 [VaKOP60s] #10  Black a5b6   d15    n13.5M  nps3.3M   eval-2.42    6.5s
+2026-09-14 21:59:46,246 [VaKOP60s] #11  Black b6c7   d16    n2.0M   nps4.0M   eval-2.44    6.2s
+2026-09-14 21:59:53,808 [VaKOP60s] #12  Black c8c7   d14    n3.8M   nps2.7M   eval-2.51    5.9s
+2026-09-14 21:59:59,661 [VaKOP60s] #13  Black c6a5   d14    n22.1M  nps4.0M   eval-3.20    5.6s
+2026-09-14 22:00:09,192 [VaKOP60s] #14  Black a5c4   d16    n24.6M  nps6.2M   eval-3.20    5.3s
+2026-09-14 22:00:16,402 [VaKOP60s] #15  Black a8a6   d16    n36.0M  nps7.2M   eval-3.20    5.0s
+2026-09-14 22:00:25,974 [VaKOP60s] #16  Black a6a4   d13    n9.2M   nps4.8M   eval-3.16    4.7s
+2026-09-14 22:00:32,804 [VaKOP60s] #17  Black c7a5   d13    n15.7M  nps3.5M   eval-3.05    4.5s
+2026-09-14 22:00:41,069 [VaKOP60s] #18  Black a4a3   d14    n40.1M  nps9.4M   eval-3.22    4.3s
+2026-09-14 22:00:46,684 [VaKOP60s] #19  Black a3c3   d14    n9.5M   nps6.2M   eval-6.94    4.1s
+2026-09-14 22:00:53,205 [VaKOP60s] #20  Black f6e4   d15    n6.1M   nps2.7M   eval-8.31    3.9s
+2026-09-14 22:00:58,452 [VaKOP60s] #21  Black e4d2   d13    n6.3M   nps4.3M   eval-11.64   3.6s
+2026-09-14 22:01:04,913 [VaKOP60s] #22  Black c3d3   d13    n9.9M   nps4.9M   eval-12.84   3.4s
+2026-09-14 22:01:11,702 [VaKOP60s] #23  Black d7b5   d10    n90.8M  nps27.8M  eval-17.36   3.3s
+2026-09-14 22:01:15,112 [VaKOP60s] #24  Black b5a4   d15    n26.0M  nps8.4M   eval-17.92   3.1s
+2026-09-14 22:01:19,755 [VaKOP60s] #25  Black a5b5   d16    n22.5M  nps7.7M   eval-18.42   2.9s
+2026-09-14 22:01:28,925 [VaKOP60s] #26  Black e8e7   d15    n15.7M  nps5.7M   eval-19.96   2.8s
+2026-09-14 22:01:33,274 [VaKOP60s] #27  Black h8c8   d11    n25.9M  nps9.9M   eval#-4      2.6s
+2026-09-14 22:01:35,900 [VaKOP60s] #28  Black b5b2   d10    n24.7M  nps10.0M  eval#-3      2.5s
+2026-09-14 22:01:38,427 [VaKOP60s] #29  Black c8c2   d9     n14.9M  nps6.4M   eval#-2      2.3s
+2026-09-14 22:01:41,078 [VaKOP60s] #30  Black a4b5   d12    n17.8M  nps8.0M   eval#-1      2.2s
+2026-09-14 22:01:41,199 [VaKOP60s] Game over: black wins (mate)

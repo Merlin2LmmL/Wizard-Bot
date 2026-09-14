@@ -5,15 +5,7 @@ const KILLER_1_SCORE: i32 = 90_000;
 const KILLER_2_SCORE: i32 = 89_000;
 const COUNTERMOVE_SCORE: i32 = 88_000;
 const TT_MOVE_SCORE: i32 = 1_000_000;
-// FIX: quiet checking moves used to fall through to plain history score,
-// same as any other quiet move. That's a companion bug to the LMP/futility
-// check-blindness fixed in negamax.rs: even after exempting checks from
-// those pruning gates, a checking move with no killer/countermove/history
-// weight behind it could still land at a late move_index and eat an LMR
-// reduction it shouldn't. A quiet check is placed below the killers/
-// countermove slots (those are still known-good moves at this node
-// specifically) but above ordinary history-scored quiets, since a check is
-// forcing regardless of whether it's ever been a killer here before.
+// Checking moves score above ordinary quiets but below killers/countermoves.
 const CHECK_SCORE: i32 = 50_000;
 
 pub(crate) fn score_move(
@@ -49,10 +41,7 @@ pub(crate) fn score_move(
     if !countermove.is_null() && m == countermove {
         return COUNTERMOVE_SCORE;
     }
-    // Per-node O(1) table lookup (see movegen.rs::CheckingSquares) instead
-    // of gives_check()'s old from-scratch bitboard-copy-and-recompute path
-    // -- this is called once per candidate move at this node, same as every
-    // other branch in this function, so it needs to be just as cheap.
+    // O(1) check lookup via per-node context (see CheckingSquares).
     if crate::movegen::gives_check(pos, m, check_ctx) {
         return CHECK_SCORE;
     }

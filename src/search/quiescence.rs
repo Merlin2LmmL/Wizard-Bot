@@ -76,13 +76,8 @@ pub(crate) fn quiescence(
         if m.flag().is_capture() || m.flag().is_promotion() {
             candidates.push(m);
         } else if allow_checks_this_ply {
-            // FIX: this used to be make_move -> is_in_check -> unmake_move,
-            // labeled a "cheap check test" while actually paying for a
-            // full make/unmake per quiet move considered here -- same
-            // underlying gap as the LMP/futility bug in negamax.rs, just
-            // paid for instead of mispruned. `gives_check()` answers the
-            // same question without touching the board, and now does so
-            // via an O(1) table lookup in the common case.
+            // Use gives_check() with the precomputed table rather than
+            // make/unmake; answers same question without touching board.
             let check_start = std::time::Instant::now();
             let move_gives_check = gives_check(pos, m, &check_ctx);
             state.local.time_in_check_detect_ns += check_start.elapsed().as_nanos() as u64;
@@ -101,13 +96,8 @@ pub(crate) fn quiescence(
     let mut best = stand_pat;
     for m in candidates {
         if !m.flag().is_promotion() && m.flag().is_capture() {
-            // SEE-based pruning: a capture that loses material even after
-            // the full exchange sequence can't recover once we're already
-            // below alpha by more than a small margin, so don't bother
-            // searching it. This replaces the old flat
-            // "stand_pat + captured_value + 200 <= alpha" delta margin,
-            // which could badly overestimate a capture's real value when
-            // the victim was defended.
+            // SEE-based pruning: skip captures that lose material
+            // once already below alpha by more than a small margin.
             let see_start = std::time::Instant::now();
             let see_val = crate::movegen::see(pos, m);
             state.local.time_in_see_ns += see_start.elapsed().as_nanos() as u64;

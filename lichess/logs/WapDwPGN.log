@@ -1,0 +1,35 @@
+2026-09-14 20:48:56,721 ==============================================================================
+2026-09-14 20:48:56,721 [WapDwPGN] turkjs (1662) vs PlayAgainstMyBot (1541)  |  rated Standard  |  5000+3000  |  playing black
+2026-09-14 20:48:56,721 ==============================================================================
+2026-09-14 20:48:57,703 [WapDwPGN] #1   Black g8f6   d-     n-      nps-      eval-        0.8s
+2026-09-14 20:48:58,488 [WapDwPGN] #2   Black d7d5   d-     n-      nps-      eval-        0.2s
+2026-09-14 20:48:58,874 [WapDwPGN] #3   Black e7e6   d-     n-      nps-      eval-        0.1s
+2026-09-14 20:49:16,584 [WapDwPGN] #4   Black f8b4   d17    n85.2M  nps4.8M   eval+0.00   17.6s
+2026-09-14 20:49:34,212 [WapDwPGN] #5   Black b4a5   d17    n71.3M  nps6.2M   eval-0.11   16.8s
+2026-09-14 20:49:50,950 [WapDwPGN] #6   Black b8c6   d17    n70.7M  nps5.3M   eval-0.33   16.1s
+2026-09-14 20:50:06,714 [WapDwPGN] #7   Black e8g8   d16    n149.3M nps9.7M   eval-0.23   15.4s
+2026-09-14 20:50:21,949 [WapDwPGN] #8   Black c6e7   d15    n85.8M  nps9.7M   eval-0.40   14.8s
+2026-09-14 20:50:38,139 [WapDwPGN] #9   Black f6h5   d15    n54.9M  nps5.2M   eval-0.42   14.2s
+2026-09-14 20:50:55,557 [WapDwPGN] #10  Black h5f6   d17    n53.7M  nps4.1M   eval-0.66   13.6s
+2026-09-14 20:51:12,715 [WapDwPGN] #11  Black e7g6   d14    n19.3M  nps2.6M   eval-1.16   13.0s
+2026-09-14 20:51:31,649 [WapDwPGN] #12  Black f6d7   d14    n15.9M  nps4.7M   eval-1.64   12.5s
+2026-09-14 20:51:48,030 [WapDwPGN] #13  Black h7h6   d14    n54.9M  nps4.6M   eval-1.10   12.0s
+2026-09-14 20:52:03,350 [WapDwPGN] #14  Black c7c6   d15    n66.0M  nps5.7M   eval-1.26   11.5s
+2026-09-14 20:52:17,761 [WapDwPGN] #15  Black g6f4   d16    n54.7M  nps5.1M   eval-2.46   11.1s
+2026-09-14 20:52:35,275 [WapDwPGN] #16  Black a5c7   d14    n7.5M   nps3.4M   eval-2.52   10.6s
+2026-09-14 20:52:51,091 [WapDwPGN] #17  Black f8f7   d16    n21.5M  nps4.7M   eval-3.32   10.2s
+2026-09-14 20:53:03,916 [WapDwPGN] #18  Black d8f6   d17    n39.9M  nps4.0M   eval-3.41    9.9s
+2026-09-14 20:53:19,330 [WapDwPGN] #19  Black f6f2   d14    n12.9M  nps3.0M   eval-4.50    9.5s
+2026-09-14 20:53:31,932 [WapDwPGN] #20  Black d7b6   d15    n40.2M  nps4.4M   eval-4.70    9.1s
+2026-09-14 20:53:45,351 [WapDwPGN] #21  Black b6c4   d16    n22.6M  nps4.9M   eval-13.89   8.8s
+2026-09-14 20:54:01,021 [WapDwPGN] #22  Black f2g1   d15    n52.7M  nps6.5M   eval-18.48   8.5s
+2026-09-14 20:54:14,656 [WapDwPGN] #23  Black f7f1   d16    n83.3M  nps10.3M  eval-22.49   8.2s
+2026-09-14 20:54:26,968 [WapDwPGN] #24  Black f1a1   d14    n55.9M  nps7.1M   eval-22.39   7.9s
+2026-09-14 20:55:01,779 [WapDwPGN] #25  Black g1c1   d16    n76.6M  nps10.1M  eval-23.00   7.6s
+2026-09-14 20:55:49,435 [WapDwPGN] #26  Black d5c4   d13    n66.6M  nps9.1M   eval-31.00   7.3s
+2026-09-14 20:56:02,393 [WapDwPGN] #27  Black c1b2   d13    n61.4M  nps8.7M   eval#-14     7.1s
+2026-09-14 20:56:16,792 [WapDwPGN] #28  Black b2a3   d11    n66.0M  nps13.6M  eval#-4      6.8s
+2026-09-14 20:56:24,036 [WapDwPGN] #29  Black a1d1   d11    n106.2M nps16.1M  eval#-3      6.6s
+2026-09-14 20:56:30,607 [WapDwPGN] #30  Black b7b6   d11    n106.3M nps16.6M  eval#-2      6.4s
+2026-09-14 20:56:37,553 [WapDwPGN] #31  Black a3a4   d12    n138.7M nps22.2M  eval#-1      6.2s
+2026-09-14 20:56:37,707 [WapDwPGN] Game over: black wins (mate)

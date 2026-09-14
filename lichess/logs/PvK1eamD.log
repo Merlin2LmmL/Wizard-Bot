@@ -1,0 +1,33 @@
+2026-09-14 21:54:54,470 ==============================================================================
+2026-09-14 21:54:54,470 [PvK1eamD] turkjs (1645) vs PlayAgainstMyBot (1540)  |  rated Standard  |  3000+1000  |  playing black
+2026-09-14 21:54:54,470 ==============================================================================
+2026-09-14 21:54:55,586 [PvK1eamD] #1   Black g8f6   d-     n-      nps-      eval-        0.7s
+2026-09-14 21:54:56,102 [PvK1eamD] #2   Black d7d5   d-     n-      nps-      eval-        0.2s
+2026-09-14 21:54:56,372 [PvK1eamD] #3   Black e7e6   d-     n-      nps-      eval-        0.1s
+2026-09-14 21:55:06,285 [PvK1eamD] #4   Black f8b4   d16    n49.6M  nps5.0M   eval+0.00    9.8s
+2026-09-14 21:55:15,716 [PvK1eamD] #5   Black b4a5   d16    n28.0M  nps4.9M   eval-0.17    9.4s
+2026-09-14 21:55:24,938 [PvK1eamD] #6   Black b8c6   d16    n30.1M  nps3.4M   eval-0.31    9.0s
+2026-09-14 21:55:33,740 [PvK1eamD] #7   Black a5b6   d15    n71.1M  nps8.3M   eval-0.28    8.6s
+2026-09-14 21:55:42,067 [PvK1eamD] #8   Black c8d7   d14    n44.9M  nps6.1M   eval-0.80    8.2s
+2026-09-14 21:55:51,622 [PvK1eamD] #9   Black c6e7   d14    n55.5M  nps9.1M   eval-0.85    7.8s
+2026-09-14 21:56:00,080 [PvK1eamD] #10  Black e8g8   d15    n103.1M nps13.8M  eval-0.80    7.5s
+2026-09-14 21:56:08,460 [PvK1eamD] #11  Black f6e4   d14    n53.4M  nps8.7M   eval-0.80    7.1s
+2026-09-14 21:56:16,746 [PvK1eamD] #12  Black e7f5   d14    n52.4M  nps7.7M   eval-0.75    6.8s
+2026-09-14 21:56:26,884 [PvK1eamD] #13  Black f5d6   d12    n16.9M  nps2.9M   eval-0.94    6.5s
+2026-09-14 21:56:44,327 [PvK1eamD] #14  Black c7c5   d9     n4.4M   nps4.9M   eval-1.61    6.2s
+2026-09-14 21:56:53,151 [PvK1eamD] #15  Black c5d4   d13    n20.7M  nps4.3M   eval-2.44    5.9s
+2026-09-14 21:57:00,990 [PvK1eamD] #16  Black d6e4   d14    n14.3M  nps4.3M   eval-2.53    5.7s
+2026-09-14 21:57:08,856 [PvK1eamD] #17  Black d4c3   d12    n6.7M   nps2.7M   eval-4.85    5.4s
+2026-09-14 21:57:15,361 [PvK1eamD] #18  Black c3b2   d11    n17.8M  nps3.4M   eval-8.53    5.2s
+2026-09-14 21:57:23,644 [PvK1eamD] #19  Black b6a5   d13    n17.7M  nps4.4M   eval-8.60    5.0s
+2026-09-14 21:57:33,536 [PvK1eamD] #20  Black d7a4   d14    n43.1M  nps9.0M   eval-8.53    4.8s
+2026-09-14 21:57:42,907 [PvK1eamD] #21  Black a8c8   d14    n15.0M  nps3.3M   eval-8.53    4.6s
+2026-09-14 21:57:49,787 [PvK1eamD] #22  Black d8b6   d12    n5.3M   nps5.0M   eval-9.45    4.4s
+2026-09-14 21:57:57,267 [PvK1eamD] #23  Black c8c2   d14    n39.5M  nps11.1M  eval-12.54   4.2s
+2026-09-14 21:58:03,542 [PvK1eamD] #24  Black a4c2   d12    n5.1M   nps6.7M   eval-14.50   4.0s
+2026-09-14 21:58:09,750 [PvK1eamD] #25  Black b6b5   d12    n15.4M  nps4.0M   eval-19.50   3.9s
+2026-09-14 21:58:15,733 [PvK1eamD] #26  Black f8c8   d10    n38.8M  nps10.4M  eval#-4      3.7s
+2026-09-14 21:58:22,359 [PvK1eamD] #27  Black a5d2   d9     n34.0M  nps9.5M   eval#-3      3.6s
+2026-09-14 21:58:25,920 [PvK1eamD] #28  Black b5b3   d11    n35.8M  nps10.3M  eval#-2      3.5s
+2026-09-14 21:58:29,565 [PvK1eamD] #29  Black e4c3   d13    n43.3M  nps13.0M  eval#-1      3.3s
+2026-09-14 21:58:29,923 [PvK1eamD] Game over: black wins (mate)

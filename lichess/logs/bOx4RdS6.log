@@ -1,0 +1,12 @@
+2026-09-14 21:30:25,890 ==============================================================================
+2026-09-14 21:30:25,890 [bOx4RdS6] eigenmann-chess (2772) vs PlayAgainstMyBot (2788)  |  rated Standard  |  1000+2000  |  playing black
+2026-09-14 21:30:25,890 ==============================================================================
+2026-09-14 21:30:27,434 [bOx4RdS6] #1   Black e7e5   d-     n-      nps-      eval-        1.0s
+2026-09-14 21:30:28,417 [bOx4RdS6] #2   Black b8c6   d-     n-      nps-      eval-        0.5s
+2026-09-14 21:30:28,982 [bOx4RdS6] #3   Black f8c5   d-     n-      nps-      eval-        0.4s
+2026-09-14 21:30:29,333 [bOx4RdS6] #4   Black g8f6   d-     n-      nps-      eval-        0.0s
+2026-09-14 21:30:29,966 [bOx4RdS6] #5   Black d7d6   d-     n-      nps-      eval-        0.2s
+2026-09-14 21:30:35,146 [bOx4RdS6] #6   Black c8g4   d13    n32.8M  nps7.4M   eval+0.00    4.9s
+2026-09-14 21:30:40,181 [bOx4RdS6] #7   Black c5b4   d14    n52.1M  nps11.2M  eval-0.03    4.7s
+2026-09-14 21:30:48,426 [bOx4RdS6] #8   Black b4a5   d13    n3.5M   nps3.4M   eval-0.03    4.6s
+2026-09-14 21:31:57,191 [bOx4RdS6] Game over: white wins (outoftime)

@@ -1,0 +1,44 @@
+2026-09-14 20:21:57,859 ==============================================================================
+2026-09-14 20:21:57,859 [W52FtE8y] PlayAgainstMyBot (1534) vs maia1 (1418)  |  rated Standard  |  5000+3000  |  playing white
+2026-09-14 20:21:57,859 ==============================================================================
+2026-09-14 20:21:58,817 [W52FtE8y] #1   White  move e2e4    depth -        nodes -              nps -         eval -          1.0s  pv 
+2026-09-14 20:22:01,060 [W52FtE8y] #2   White  move g1f3    depth -        nodes -              nps -         eval -          1.0s  pv 
+2026-09-14 20:22:01,450 [W52FtE8y] #3   White  move d2d4    depth -        nodes -              nps -         eval -          0.3s  pv 
+2026-09-14 20:22:01,727 [W52FtE8y] #4   White  move f3d4    depth -        nodes -              nps -         eval -          0.1s  pv 
+2026-09-14 20:22:01,927 [W52FtE8y] #5   White  move b1c3    depth -        nodes -              nps -         eval -          0.1s  pv 
+2026-09-14 20:22:03,069 [W52FtE8y] #6   White  move d4b5    depth -        nodes -              nps -         eval -          0.1s  pv 
+2026-09-14 20:22:25,860 [W52FtE8y] #7   White  move b5d6    depth 16       nodes 79,160,120     nps 5.51M     eval +0.55     18.0s  pv b5d6 f8d6 d1d6 d8e7 c1f4 f6h5 d6e7 e8e7
+2026-09-14 20:22:48,316 [W52FtE8y] #8   White  move d1d6    depth 17       nodes 56,548,895     nps 7.48M     eval +0.60     17.2s  pv d1d6 d8a5 f1d3 a5b4 d6g3 e8g8 e1g1 b4b6
+2026-09-14 20:23:06,010 [W52FtE8y] #9   White  move d6g3    depth 16       nodes 96,049,602     nps 5.83M     eval +0.64     16.5s  pv d6g3 c6b4 e1d1 e8g8 c1g5 e6e5 d1c1 e7e6
+2026-09-14 20:23:25,184 [W52FtE8y] #10  White  move c1g5    depth 15       nodes 64,944,500     nps 5.28M     eval +0.89     15.8s  pv c1g5 f8d8 bookns 180 ttns 2260164125 singns 6058515590
+2026-09-14 20:23:41,934 [W52FtE8y] #11  White  move g5h6    depth 15       nodes 39,784,860     nps 2.63M     eval +1.98     15.1s  pv g5h6 f6h5 g3g5 e7f6 g5h5 g7h6 f1d3 c6e5
+2026-09-14 20:24:01,985 [W52FtE8y] #12  White  move g3g4    depth 16       nodes 47,968,826     nps 5.03M     eval +2.01     14.5s  pv g3g4 e7f6 g4h5 g7h6 f1d3 c6e5 h5h3 f8e8
+2026-09-14 20:24:18,894 [W52FtE8y] #13  White  move h6f8    depth 16       nodes 60,350,338     nps 12.91M    eval +3.57     13.9s  pv h6f8 g8f8 g4e2 e7f6 e1c1 c6e5 c1b1 f8g8
+2026-09-14 20:24:38,167 [W52FtE8y] #14  White  move g4e2    depth 15       nodes 146,109,658    nps 11.00M    eval +3.59     13.3s  pv g4e2 f8d6 bookns 130 ttns 5088537375 singns 15803476945
+2026-09-14 20:24:54,950 [W52FtE8y] #15  White  move e2d2    depth 17       nodes 66,733,797     nps 5.25M     eval +3.71     12.8s  pv e2d2 d4c6 e1c1 f8d8 c1b1 c6e5 f2f4 e5c6
+2026-09-14 20:25:08,983 [W52FtE8y] #16  White  move c3d5    depth 16       nodes 108,162,343    nps 8.83M     eval +3.96     12.3s  pv c3d5 f8d8 f1d3 h5g7 e1g1 d4c6 d2e3 g7e6
+2026-09-14 20:25:25,567 [W52FtE8y] #17  White  move c2c3    depth 16       nodes 72,514,818     nps 6.18M     eval +4.71     11.7s  pv c2c3 d4c6 f1e2 h5f4 d5f4 e5f4 e1c1 f8e7
+2026-09-14 20:25:41,077 [W52FtE8y] #18  White  move d5b6    depth 15       nodes 58,544,565     nps 7.32M     eval +4.58     11.3s  pv d5b6 a8b8 b6c4 e6c5 d2d6 f8d6 c4d6 c8e6
+2026-09-14 20:25:56,407 [W52FtE8y] #19  White  move a1d1    depth 16       nodes 73,129,511     nps 7.23M     eval +4.68     10.8s  pv a1d1 e6c5 d2d6 c8e6 d6f8 b8f8 f1c4 e6c4
+2026-09-14 20:26:12,068 [W52FtE8y] #20  White  move b6c8    depth 15       nodes 48,307,244     nps 4.64M     eval +5.39     10.4s  pv b6c8 b8c8 d2d6 c8e8 d6f8 g8f8 d1d6 f4e6
+2026-09-14 20:26:29,155 [W52FtE8y] #21  White  move d2d6    depth 17       nodes 62,684,746     nps 6.26M     eval +5.43     10.0s  pv d2d6 f8d6 d1d6 c8c7 e1d2 g8f8 d2e3 f8e7
+2026-09-14 20:26:46,334 [W52FtE8y] #22  White  move d1d6    depth 16       nodes 3,407,859      nps 5.49M     eval +5.43      9.7s  pv d1d6 c8c7 e1d2 g8f8 d2e3 f8e7 d6d2 h5f6
+2026-09-14 20:27:04,822 [W52FtE8y] #23  White  move g2g3    depth 15       nodes 20,237,591     nps 6.48M     eval +6.95      9.3s  pv g2g3 f4e6 d6a6 e6c5 a6b6 c5e4 f1b5 c8d8
+2026-09-14 20:27:24,270 [W52FtE8y] #24  White  move f1h3    depth 15       nodes 60,751,169     nps 10.50M    eval +6.43      8.8s  pv f1h3 h5g7 e1d2 c8a8 d2e3 e6c7 bookns 140
+2026-09-14 20:27:37,703 [W52FtE8y] #25  White  move d6e6    depth 17       nodes 26,686,712     nps 6.25M     eval +9.12      8.5s  pv d6e6 c8c3 b2c3 f7e6 h3e6 g8f8 f2f3 a6a5
+2026-09-14 20:27:50,306 [W52FtE8y] #26  White  move h3e6    depth 19       nodes 44,747,990     nps 6.94M     eval +10.80     8.2s  pv h3e6 g8f8 e6c8 f6e4 c8a6 e4d6 e1e2 f8e7
+2026-09-14 20:28:04,803 [W52FtE8y] #27  White  move e6c8    depth 18       nodes 28,372,012     nps 4.41M     eval +11.45     7.9s  pv e6c8 a6a5 c8b7 g7f7 e1e2 g6g5 bookns 100
+2026-09-14 20:28:20,589 [W52FtE8y] #28  White  move c8a6    depth 18       nodes 33,275,400     nps 4.72M     eval +12.06     7.7s  pv c8a6 b5b4 bookns 420 ttns 1191900511 singns 2652096195
+2026-09-14 20:28:31,974 [W52FtE8y] #29  White  move a6b5    depth 18       nodes 14,164,202     nps 4.34M     eval +12.44     7.4s  pv a6b5 c5e4 e1e2 e4f6 bookns 170 ttns 506722576
+2026-09-14 20:28:42,656 [W52FtE8y] #30  White  move e1e2    depth 17       nodes 74,533,183     nps 10.46M    eval +13.57     7.1s  pv e1e2 g7f6 e2e3 f6e5 h1d1 e5e6 b5c4 bookns
+2026-09-14 20:28:56,788 [W52FtE8y] #31  White  move h1d1    depth 15       nodes 44,423,662     nps 6.52M     eval +13.61     6.9s  pv h1d1 c5e6 b5c6 e6g5 e2e3 g5f3 e3e4 f3h2
+2026-09-14 20:29:09,126 [W52FtE8y] #32  White  move b5c4    depth 15       nodes 55,623,785     nps 8.34M     eval +14.57     6.7s  pv b5c4 e5f6 d1d6 f6g7 d6d5 c5a4 d5b5 g7f6
+2026-09-14 20:29:21,762 [W52FtE8y] #33  White  move d1d5    depth 16       nodes 40,140,214     nps 7.39M     eval +14.85     6.5s  pv d1d5 e5f6 d5b5 f6e7 c4d5 e7d6 d5e4 a4c5
+2026-09-14 20:29:33,076 [W52FtE8y] #34  White  move d5a5    depth 14       nodes 24,747,454     nps 5.39M     eval +18.53     6.3s  pv d5a5 e6e7 a5a4 g6g5 bookns 120 ttns 1089307872
+2026-09-14 20:29:53,875 [W52FtE8y] #35  White  move a5a4    depth 15       nodes 25,815,190     nps 4.25M     eval +18.54     6.1s  pv a5a4 g6g5 e2e3 d6d7 e3e4 d7c7 bookns 150
+2026-09-14 20:30:02,150 [W52FtE8y] #36  White  move a4a6    depth 15       nodes 101,043,559    nps 17.14M    eval #+5        5.9s  pv a4a6 g6g5 b2b3 g5g4 e2d2 e4e3 d2d3 e3f2
+2026-09-14 20:30:16,537 [W52FtE8y] #37  White  move a6a5    depth 14       nodes 78,752,475     nps 13.72M    eval #+4        5.7s  pv a6a5 e4e3 e2e3 g6g5 e3d2 g5g4 b2b3 bookns
+2026-09-14 20:30:24,567 [W52FtE8y] #38  White  move e2e3    depth 15       nodes 99,656,786     nps 17.86M    eval #+3        5.6s  pv e2e3 g6g5 e3d2 g5g4 b2b3 bookns 40 ttns
+2026-09-14 20:30:31,796 [W52FtE8y] #39  White  move e3d2    depth 14       nodes 52,661,560     nps 9.69M     eval #+2        5.4s  pv e3d2 g5g4 b2b3 bookns 40 ttns 2765846765 singns
+2026-09-14 20:30:40,991 [W52FtE8y] #40  White  move b2b3    depth 16       nodes 41,687,779     nps 7.85M     eval #+1        5.3s  pv b2b3 bookns 30 ttns 2245071286 singns 5004224603 evalns
+2026-09-14 20:30:41,109 [W52FtE8y] Game over: white wins (mate)

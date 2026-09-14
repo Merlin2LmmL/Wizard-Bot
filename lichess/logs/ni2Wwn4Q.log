@@ -1,0 +1,39 @@
+2026-09-14 21:46:52,009 ==============================================================================
+2026-09-14 21:46:52,009 [ni2Wwn4Q] maia1 (1606) vs PlayAgainstMyBot (2645)  |  rated Standard  |  1000+1000  |  playing black
+2026-09-14 21:46:52,009 ==============================================================================
+2026-09-14 21:46:52,010 [ni2Wwn4Q] #1   Black e7e5   d-     n-      nps-      eval-        0.0s
+2026-09-14 21:46:56,020 [ni2Wwn4Q] #2   Black e5d4   d14    n40.5M  nps10.8M  eval-0.30    3.8s
+2026-09-14 21:46:59,872 [ni2Wwn4Q] #3   Black g8f6   d13    n36.7M  nps10.2M  eval-0.26    3.6s
+2026-09-14 21:47:03,403 [ni2Wwn4Q] #4   Black f8e7   d15    n10.6M  nps3.1M   eval-0.29    3.5s
+2026-09-14 21:47:07,073 [ni2Wwn4Q] #5   Black e8g8   d13    n25.8M  nps7.7M   eval-0.29    3.3s
+2026-09-14 21:47:12,160 [ni2Wwn4Q] #6   Black f8e8   d13    n26.2M  nps8.2M   eval-0.29    3.2s
+2026-09-14 21:47:18,201 [ni2Wwn4Q] #7   Black d7d5   d13    n27.4M  nps8.9M   eval-0.31    3.1s
+2026-09-14 21:47:21,345 [ni2Wwn4Q] #8   Black b8c6   d13    n24.3M  nps8.2M   eval-0.33    3.0s
+2026-09-14 21:47:24,528 [ni2Wwn4Q] #9   Black c6b4   d14    n23.3M  nps8.1M   eval-0.27    2.9s
+2026-09-14 21:47:29,768 [ni2Wwn4Q] #10  Black c8f5   d13    n15.6M  nps6.9M   eval-0.44    2.8s
+2026-09-14 21:47:33,872 [ni2Wwn4Q] #11  Black f6e4   d13    n9.8M   nps3.7M   eval-0.46    2.7s
+2026-09-14 21:47:36,729 [ni2Wwn4Q] #12  Black d5e4   d14    n4.9M   nps4.3M   eval-0.61    2.6s
+2026-09-14 21:47:39,530 [ni2Wwn4Q] #13  Black c7c5   d12    n12.9M  nps5.1M   eval-0.63    2.5s
+2026-09-14 21:47:42,818 [ni2Wwn4Q] #14  Black c5d4   d11    n3.7M   nps4.0M   eval-1.28    2.4s
+2026-09-14 21:47:47,132 [ni2Wwn4Q] #15  Black d4c3   d13    n5.1M   nps3.4M   eval-1.38    2.3s
+2026-09-14 21:47:49,608 [ni2Wwn4Q] #16  Black e8d8   d14    n4.0M   nps5.0M   eval-1.57    2.3s
+2026-09-14 21:47:57,224 [ni2Wwn4Q] #17  Black e7f6   d13    n5.3M   nps2.6M   eval-2.29    2.2s
+2026-09-14 21:48:07,903 [ni2Wwn4Q] #18  Black f6c3   d13    n4.6M   nps3.0M   eval-2.55    2.1s
+2026-09-14 21:48:15,035 [ni2Wwn4Q] #19  Black f5e6   d13    n7.3M   nps6.3M   eval-3.28    2.0s
+2026-09-14 21:48:20,149 [ni2Wwn4Q] #20  Black e6a2   d15    n23.2M  nps11.6M  eval-3.26    2.0s
+2026-09-14 21:48:24,437 [ni2Wwn4Q] #21  Black a2b3   d14    n2.5M   nps4.9M   eval-4.97    1.9s
+2026-09-14 21:48:29,178 [ni2Wwn4Q] #22  Black c3b4   d14    n10.8M  nps5.8M   eval-4.99    1.9s
+2026-09-14 21:48:31,883 [ni2Wwn4Q] #23  Black d8d3   d14    n9.0M   nps4.9M   eval-6.14    1.8s
+2026-09-14 21:48:39,608 [ni2Wwn4Q] #24  Black d3b3   d14    n6.1M   nps3.6M   eval-6.42    1.8s
+2026-09-14 21:48:44,991 [ni2Wwn4Q] #25  Black f7f6   d13    n6.5M   nps3.7M   eval-7.71    1.7s
+2026-09-14 21:48:52,547 [ni2Wwn4Q] #26  Black g8f7   d13    n10.0M  nps6.0M   eval-7.88    1.7s
+2026-09-14 21:48:58,816 [ni2Wwn4Q] #27  Black b3d3   d13    n16.7M  nps10.3M  eval-9.35    1.6s
+2026-09-14 21:49:01,944 [ni2Wwn4Q] #28  Black e4d3   d13    n1.8M   nps3.8M   eval-9.88    1.6s
+2026-09-14 21:49:06,752 [ni2Wwn4Q] #29  Black a8d8   d15    n7.7M   nps5.0M   eval-11.21   1.5s
+2026-09-14 21:49:12,217 [ni2Wwn4Q] #30  Black f6e5   d13    n2.0M   nps2.9M   eval-12.74   1.5s
+2026-09-14 21:49:18,100 [ni2Wwn4Q] #31  Black d3d2   d14    n29.7M  nps20.2M  eval-35.13   1.5s
+2026-09-14 21:49:21,879 [ni2Wwn4Q] #32  Black d2d1q  d9     n4.9M   nps5.9M   eval#-4      1.4s
+2026-09-14 21:49:26,152 [ni2Wwn4Q] #33  Black b4d2   d9     n23.0M  nps16.3M  eval#-3      1.4s
+2026-09-14 21:49:30,005 [ni2Wwn4Q] #34  Black d1e2   d9     n32.3M  nps23.3M  eval#-2      1.4s
+2026-09-14 21:49:33,776 [ni2Wwn4Q] #35  Black g7g6   d10    n26.7M  nps19.7M  eval#-1      1.4s
+2026-09-14 21:49:34,166 [ni2Wwn4Q] Game over: black wins (mate)

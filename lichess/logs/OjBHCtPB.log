@@ -1,0 +1,29 @@
+2026-09-14 21:46:30,358 ==============================================================================
+2026-09-14 21:46:30,358 [OjBHCtPB] PlayAgainstMyBot (2645) vs sargon-4ply (1562)  |  rated Standard  |  1000+1000  |  playing white
+2026-09-14 21:46:30,358 ==============================================================================
+2026-09-14 21:46:31,339 [OjBHCtPB] #1   White e2e4   d-     n-      nps-      eval-        1.0s
+2026-09-14 21:46:33,438 [OjBHCtPB] #2   White g1f3   d-     n-      nps-      eval-        0.9s
+2026-09-14 21:46:35,097 [OjBHCtPB] #3   White f1b5   d-     n-      nps-      eval-        0.5s
+2026-09-14 21:46:36,407 [OjBHCtPB] #4   White e1g1   d-     n-      nps-      eval-        0.2s
+2026-09-14 21:46:38,954 [OjBHCtPB] #5   White c2c3   d-     n-      nps-      eval-        0.0s
+2026-09-14 21:46:45,159 [OjBHCtPB] #6   White b5c6   d12    n16.9M  nps4.9M   eval-0.41    3.8s
+2026-09-14 21:46:50,537 [OjBHCtPB] #7   White c6d7   d12    n2.5M   nps3.4M   eval+0.00    3.7s
+2026-09-14 21:46:55,528 [OjBHCtPB] #8   White f1f2   d14    n4.1M   nps8.4M   eval+0.09    3.5s
+2026-09-14 21:47:01,394 [OjBHCtPB] #9   White g1f2   d15    n317.1k nps2.6M   eval+0.12    3.4s
+2026-09-14 21:47:05,658 [OjBHCtPB] #10  White f3e5   d13    n6.4M   nps2.9M   eval+0.94    3.3s
+2026-09-14 21:47:11,039 [OjBHCtPB] #11  White e5f3   d13    n1.6M   nps2.3M   eval+0.97    3.1s
+2026-09-14 21:47:15,271 [OjBHCtPB] #12  White b1a3   d13    n21.2M  nps7.0M   eval+0.95    3.0s
+2026-09-14 21:47:19,562 [OjBHCtPB] #13  White a3c2   d12    n23.1M  nps8.1M   eval+1.19    2.9s
+2026-09-14 21:47:24,778 [OjBHCtPB] #14  White c2e3   d12    n13.8M  nps4.9M   eval+1.13    2.8s
+2026-09-14 21:47:28,864 [OjBHCtPB] #15  White b2b3   d12    n8.6M   nps4.5M   eval+1.48    2.7s
+2026-09-14 21:47:33,267 [OjBHCtPB] #16  White d1c2   d13    n9.7M   nps5.0M   eval+3.45    2.6s
+2026-09-14 21:47:38,001 [OjBHCtPB] #17  White a1a2   d12    n12.3M  nps6.6M   eval+3.93    2.5s
+2026-09-14 21:47:42,518 [OjBHCtPB] #18  White c2e4   d12    n16.9M  nps7.0M   eval+4.25    2.4s
+2026-09-14 21:47:46,545 [OjBHCtPB] #19  White e4e6   d12    n8.4M   nps4.7M   eval+6.53    2.4s
+2026-09-14 21:47:51,075 [OjBHCtPB] #20  White a2a7   d11    n8.5M   nps7.6M   eval+6.80    2.3s
+2026-09-14 21:47:55,346 [OjBHCtPB] #21  White c1d2   d11    n8.0M   nps3.6M   eval+11.36   2.2s
+2026-09-14 21:47:59,019 [OjBHCtPB] #22  White f3d4   d12    n3.3M   nps5.9M   eval+11.85   2.1s
+2026-09-14 21:48:02,952 [OjBHCtPB] #23  White e3g4   d12    n36.1M  nps17.4M  eval#+6      2.1s
+2026-09-14 21:48:07,080 [OjBHCtPB] #24  White e6f6   d9     n13.6M  nps6.8M   eval#+2      2.0s
+2026-09-14 21:48:09,481 [OjBHCtPB] #25  White g4h6   d11    n24.8M  nps12.7M  eval#+1      2.0s
+2026-09-14 21:48:09,586 [OjBHCtPB] Game over: white wins (mate)

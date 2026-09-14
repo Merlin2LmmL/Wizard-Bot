@@ -12,13 +12,8 @@ pub struct ThreadLocalSearch {
     pub killers: [[Move; 2]; MAX_PLY],
     pub history: [[i32; 64]; 64],
     pub countermove: [[Move; 64]; 64],
-    // NOTE: the old `excluded_move` field used to live here, set and cleared
-    // around the singular-extension check -- but nothing in negamax() ever
-    // *read* it, so the exclusion never actually reached the TT probe or the
-    // move loop. It's been replaced with an explicit `excluded: Move`
-    // *parameter* on negamax() instead (see negamax.rs), which is both
-    // correct and far easier to audit than a mutable side-channel field
-    // that has to be set-then-immediately-cleared by every caller.
+    // Replaced mutable `excluded_move` with explicit `excluded: Move` param
+    // on negamax() (see negamax.rs) — avoids mutable side-channel.
     pub rep_stack: Vec<u64>,
     pub nodes: u64,
     pub go_token: u32,
@@ -76,25 +71,8 @@ impl SearchState {
     }
 
     pub(crate) fn time_up(&mut self) -> bool {
-        // BUGFIX: this used to be `if self.local.nodes % 4096 != 0`, full
-        // stop. A freshly spawned root-move thread starts with
-        // `nodes == 0`, so its FIRST call increments to 1 -- `1 % 4096 !=
-        // 0` -- and this returns the just-reset `self.local.stopped`
-        // (false) without ever touching the real clock. Combined with
-        // rayon's thread pool having far fewer workers than there are root
-        // moves on most real middlegame positions, a task can sit queued
-        // for a while and only start executing well after `deadline_ms`
-        // has already passed -- and once it does start, it still can't
-        // notice until it's ground through up to 4095 nodes of real search
-        // (singular-verification sub-searches, ProbCut sub-searches, deep
-        // extension chains -- all counted toward that same budget), which
-        // on a tactically loaded position is not cheap. That's a plausible
-        // source of multi-second, entirely invisible overruns: the thread
-        // was late to start, and the one mechanism that could have caught
-        // that immediately was skipped specifically because it was late.
-        // Checking on node 1 as well as every 4096th closes that gap: any
-        // thread that starts after the deadline finds out on its very
-        // first call, before doing any real work.
+        // Check deadline on node 1 (not just every 4096) so late-started threads
+        // discover timeout immediately before doing real work.
         if self.local.nodes % 4096 != 0 && self.local.nodes != 1 {
             return self.local.stopped;
         }

@@ -1,0 +1,41 @@
+{
+  "engine_path": "../target/release/uci_binary",
+  "engine_args": [],
+  "max_concurrent_games": 3,
+  "base_backoff_secs": 5,
+  "max_backoff_secs": 600,
+  "cooldown_file": "cooldowns.json",
+
+  "accept": {
+    "variants": ["standard"],
+    "speeds": ["bullet", "blitz", "rapid"],
+    "rated": null,
+    "only_bots": false,
+    "min_initial_secs": 15,
+    "max_initial_secs": 1800,
+    "max_increment_secs": 60,
+    "decline_reason": "generic",
+    "rating_range": {
+      "mode": "dynamic",
+      "min_diff": -300,
+      "max_diff": 150
+    }
+  },
+
+  "autoqueue": {
+    "enabled": true,
+    "poll_interval_secs": 3,
+    "max_pending_challenges": 3,
+    "variant": "standard",
+    "time_controls": ["3+1", "3+0", "1+1"],
+    "rated": true,
+    "candidates_per_poll": 50,
+    "min_seconds_between_challenges": 20,
+    "min_games": 30,
+    "rating_range": {
+      "mode": "static",
+      "min_elo": 1500,
+      "max_elo": 1900
+    }
+  }
+}

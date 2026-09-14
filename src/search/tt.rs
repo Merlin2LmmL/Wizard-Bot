@@ -44,22 +44,8 @@ impl TTEntry {
 const TT_BUCKET_SIZE: usize = 4;
 type TTBucket = [TTEntry; TT_BUCKET_SIZE];
 
-// BUGFIX: this table used to be wrapped in a single, table-wide
-// `RwLock<TranspositionTable>` (see SharedSearch below, previously
-// `Arc<RwLock<TranspositionTable>>`). With root-parallel search that means
-// *every* node, on *every* one of the ~dozens of root-move threads, takes
-// either a read or a write lock on the exact same mutex to probe/store the
-// TT -- a store anywhere serializes every other thread's probe or store
-// anywhere else in the table, table-wide, regardless of whether they touch
-// the same bucket. That's a real scalability ceiling independent of the
-// check-extension bug (see MAX_LINE_EXTENSIONS in mod.rs) and a plausible
-// contributor to the nps swings across otherwise-similar positions (more
-// legal root moves -> more threads -> more contention on the one lock).
-//
-// Fix: lock per-bucket instead of table-wide. Two threads only actually
-// contend if their positions hash into the *same* bucket, which with
-// thousands of buckets is rare. `generation` moves to an AtomicU8 so
-// `new_generation()` needs no lock at all.
+// Lock per-bucket instead of table-wide; only same-bucket threads contend.
+// `generation` is AtomicU8 so `new_generation()` needs no lock.
 pub struct TranspositionTable {
     buckets: Vec<RwLock<TTBucket>>,
     mask: usize,

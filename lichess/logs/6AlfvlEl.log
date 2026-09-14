@@ -1,0 +1,23 @@
+2026-09-14 21:12:49,025 ==============================================================================
+2026-09-14 21:12:49,025 [6AlfvlEl] PlayAgainstMyBot (1549) vs turkjs (1643)  |  rated Standard  |  5000+3000  |  playing white
+2026-09-14 21:12:49,025 ==============================================================================
+2026-09-14 21:12:50,054 [6AlfvlEl] #1   White e2e4   d-     n-      nps-      eval-        1.0s
+2026-09-14 21:12:51,071 [6AlfvlEl] #2   White e4d5   d-     n-      nps-      eval-        0.2s
+2026-09-14 21:12:51,228 [6AlfvlEl] #3   White b1c3   d-     n-      nps-      eval-        0.0s
+2026-09-14 21:13:08,935 [6AlfvlEl] #4   White f1e2   d17    n58.6M  nps3.5M   eval+0.25   17.6s
+2026-09-14 21:13:26,194 [6AlfvlEl] #5   White g1f3   d15    n70.0M  nps4.3M   eval+0.25   16.9s
+2026-09-14 21:13:42,840 [6AlfvlEl] #6   White d2d4   d16    n121.4M nps8.8M   eval+0.49   16.2s
+2026-09-14 21:13:58,851 [6AlfvlEl] #7   White f3g5   d15    n118.1M nps8.5M   eval+1.07   15.5s
+2026-09-14 21:14:31,381 [6AlfvlEl] #8   White e2f3   d15    n144.1M nps10.3M  eval+1.09   14.0s
+2026-09-14 21:14:47,058 [6AlfvlEl] #9   White c1f4   d15    n156.7M nps11.7M  eval+1.65   13.4s
+2026-09-14 21:15:05,440 [6AlfvlEl] #10  White c3e2   d15    n73.2M  nps5.7M   eval+1.64   12.9s
+2026-09-14 21:15:21,132 [6AlfvlEl] #11  White g5e4   d17    n76.4M  nps6.2M   eval+1.83   12.4s
+2026-09-14 21:15:35,502 [6AlfvlEl] #12  White f3e4   d17    n61.4M  nps7.8M   eval+1.83   11.9s
+2026-09-14 21:15:50,702 [6AlfvlEl] #13  White d4d5   d15    n89.5M  nps7.8M   eval+1.83   11.4s
+2026-09-14 21:16:05,896 [6AlfvlEl] #14  White e4f3   d15    n68.0M  nps7.1M   eval+3.80   11.0s
+2026-09-14 21:16:35,173 [6AlfvlEl] #15  White d5c6   d14    n27.9M  nps2.9M   eval+6.24   10.6s
+2026-09-14 21:16:50,513 [6AlfvlEl] #16  White e2d4   d15    n16.4M  nps5.8M   eval+7.34   10.2s
+2026-09-14 21:17:06,101 [6AlfvlEl] #17  White d4c6   d17    n35.9M  nps5.3M   eval+8.95    9.8s
+2026-09-14 21:17:18,411 [6AlfvlEl] #18  White f3h5   d15    n11.5M  nps4.4M   eval+11.39   9.4s
+2026-09-14 21:17:33,279 [6AlfvlEl] #19  White d1h5   d16    n26.6M  nps4.0M   eval+15.35   9.1s
+2026-09-14 21:17:51,784 [6AlfvlEl] #20  White h5g6   d15    n10.3M  nps6.4M   eval+16.81   8.5s

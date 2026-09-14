@@ -1,0 +1,32 @@
+2026-09-14 20:30:48,322 ==============================================================================
+2026-09-14 20:30:48,322 [LFBJCTmA] maia1 (1421) vs PlayAgainstMyBot (1537)  |  rated Standard  |  5000+3000  |  playing black
+2026-09-14 20:30:48,322 ==============================================================================
+2026-09-14 20:30:52,273 [LFBJCTmA] #1   Black  move g8f6    depth -        nodes -              nps -         eval -          0.7s  pv 
+2026-09-14 20:30:53,173 [LFBJCTmA] #2   Black  move e7e6    depth -        nodes -              nps -         eval -          0.5s  pv 
+2026-09-14 20:30:53,419 [LFBJCTmA] #3   Black  move f8b4    depth -        nodes -              nps -         eval -          0.2s  pv 
+2026-09-14 20:30:54,110 [LFBJCTmA] #4   Black  move h7h6    depth -        nodes -              nps -         eval -          0.0s  pv 
+2026-09-14 20:30:54,365 [LFBJCTmA] #5   Black  move c7c5    depth -        nodes -              nps -         eval -          0.0s  pv 
+2026-09-14 20:31:17,945 [LFBJCTmA] #6   Black  move b8c6    depth 15       nodes 167,053,493    nps 9.34M     eval +0.04     17.9s  pv b8c6 d1d3 c6e5 bookns 650 ttns 5501025788 singns
+2026-09-14 20:31:35,517 [LFBJCTmA] #7   Black  move b4c3    depth 17       nodes 72,304,312     nps 4.22M     eval -0.48     17.1s  pv b4c3 b2c3 g7g5 h4g3 d8a5 d1c2 f6e4 g1f3
+2026-09-14 20:31:56,401 [LFBJCTmA] #8   Black  move g7g5    depth 16       nodes 107,690,659    nps 7.48M     eval -0.48     16.4s  pv g7g5 h4g3 d8a5 d1c2 f6e4 g1f3 bookns 1720
+2026-09-14 20:32:13,000 [LFBJCTmA] #9   Black  move f6e4    depth 17       nodes 61,360,507     nps 5.30M     eval -0.52     15.7s  pv f6e4 g1f3 d8a5 d1c2 e4g3 h2g3 a5c5 c2b3
+2026-09-14 20:32:34,349 [LFBJCTmA] #10  Black  move d8a5    depth 17       nodes 98,567,709     nps 6.55M     eval -0.68     15.0s  pv d8a5 g3c7 a5c3 d3c3 e4c3 g1f3 c3e4 f3d2
+2026-09-14 20:32:56,760 [LFBJCTmA] #11  Black  move a5c3    depth 14       nodes 15,599,055     nps 3.84M     eval -6.74     14.4s  pv a5c3 e1d1 c3a1 d1d2 a1f1 f2f4 c6a5 f4g5
+2026-09-14 20:33:18,783 [LFBJCTmA] #12  Black  move c3a1    depth 16       nodes 41,795,454     nps 6.33M     eval -6.77     13.8s  pv c3a1 d1d2 a1f1 e4f3 c6a5 d2c2 a5c4 f3f6
+2026-09-14 20:33:39,313 [LFBJCTmA] #13  Black  move a1f1    depth 15       nodes 27,323,356     nps 4.79M     eval -6.91     13.2s  pv a1f1 g3e5 bookns 120 ttns 685598100 singns 2982674129
+2026-09-14 20:33:56,988 [LFBJCTmA] #14  Black  move f7f5    depth 17       nodes 69,136,514     nps 5.45M     eval -7.47     12.7s  pv f7f5 e4e3 f5f4 e3c3 c6e5 c3e5 h8f8 e5e4
+2026-09-14 20:34:15,484 [LFBJCTmA] #15  Black  move f5f4    depth 15       nodes 40,542,392     nps 3.34M     eval -7.47     12.1s  pv f5f4 e3c3 c6e5 c3e5 h8f8 e5e4 f1f2 c5c6
+2026-09-14 20:34:32,608 [LFBJCTmA] #16  Black  move c6e5    depth 18       nodes 143,823,451    nps 12.35M    eval -7.47     11.6s  pv c6e5 e4e5 h8f8 e5e4 bookns 60 ttns 3446530253
+2026-09-14 20:34:49,676 [LFBJCTmA] #17  Black  move h8f8    depth 15       nodes 33,122,122     nps 2.96M     eval -7.47     11.2s  pv h8f8 e5e4 bookns 130 ttns 694254076 singns 2647019214
+2026-09-14 20:35:02,833 [LFBJCTmA] #18  Black  move f1g2    depth 14       nodes 80,254,754     nps 7.47M     eval -8.28     10.7s  pv f1g2 g7g6 bookns 140 ttns 1646313525 singns 6035715166
+2026-09-14 20:35:20,532 [LFBJCTmA] #19  Black  move e8e7    depth 17       nodes 50,378,366     nps 4.88M     eval -8.56     10.3s  pv e8e7 g6h6 g2h1 h6g5 f8f6 g5g7 f6f7 g7g5
+2026-09-14 20:35:33,956 [LFBJCTmA] #20  Black  move e7e8    depth 17       nodes 23,811,382     nps 3.26M     eval -8.56      9.9s  pv e7e8 g7g6 e8d8 g6h6 f8f5 g1f3 g2h1 f3d4
+2026-09-14 20:35:52,007 [LFBJCTmA] #21  Black  move f8f7    depth 16       nodes 25,471,885     nps 2.93M     eval -8.75      9.5s  pv f8f7 g6g8 e8e7 g1f3 g2h1 f3e5 f7f5 e5g6
+2026-09-14 20:36:10,506 [LFBJCTmA] #22  Black  move e8e7    depth 16       nodes 18,818,934     nps 2.89M     eval -8.62      9.2s  pv e8e7 g1f3 g2f2 h1c1 f2e3 d2d1 e3c5 g8h8
+2026-09-14 20:36:20,521 [LFBJCTmA] #23  Black  move g2h1    depth 15       nodes 16,570,905     nps 5.46M     eval -12.00     8.9s  pv g2h1 g1f3 h1a1 g6d3 a1b2 d2d1 f7f5 f3d4
+2026-09-14 20:36:33,000 [LFBJCTmA] #24  Black  move h1g1    depth 14       nodes 25,202,385     nps 3.61M     eval -15.54     8.6s  pv h1g1 h2h4 f7f5 h6g7 e7d8 g7h8 d8c7 h8d4
+2026-09-14 20:36:49,389 [LFBJCTmA] #25  Black  move b7c6    depth 13       nodes 54,894,673     nps 6.73M     eval -17.78     8.2s  pv b7c6 h2h4 g1f2 h6g5 e7d6 c4c5 f2c5 g5c5
+2026-09-14 20:37:01,290 [LFBJCTmA] #26  Black  move a8b8    depth 14       nodes 84,114,214     nps 10.57M    eval -32.98     8.0s  pv a8b8 bookns 140 ttns 1377826123 singns 9655002274 evalns
+2026-09-14 20:37:16,676 [LFBJCTmA] #27  Black  move g1d1    depth 12       nodes 118,303,466    nps 16.77M    eval #-3        7.7s  pv g1d1 d3c4 d7d5 c4c3 b8b3 bookns 130 ttns
+2026-09-14 20:37:32,900 [LFBJCTmA] #28  Black  move d1d5    depth 14       nodes 127,553,615    nps 17.22M    eval #-1        7.4s  pv d1d5 bookns 120 ttns 1825479702 singns 7674197057 evalns
+2026-09-14 20:37:35,831 [LFBJCTmA] Game over: black wins (mate)
