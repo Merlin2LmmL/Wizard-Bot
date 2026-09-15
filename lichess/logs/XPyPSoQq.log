@@ -1,0 +1,12 @@
+2026-09-15 00:45:41,354 ==============================================================================
+2026-09-15 00:45:41,357 [XPyPSoQq] PlayAgainstMyBot (1555) vs katzebot (1250)  |  rated Standard  |  5000+3000  |  playing white
+2026-09-15 00:45:41,357 ==============================================================================
+2026-09-15 00:45:42,372 [XPyPSoQq] #1   White e2e4   d-     n-      nps-      eval-        1.0s
+2026-09-15 00:45:59,926 [XPyPSoQq] #2   White e4f5   d15    n32.7M  nps2.0M   eval+1.15   17.4s
+2026-09-15 00:46:16,609 [XPyPSoQq] #3   White f1e2   d14    n36.6M  nps2.2M   eval+1.16   16.6s
+2026-09-15 00:46:32,961 [XPyPSoQq] #4   White e2h5   d13    n8.3M   nps1.5M   eval+1.53   16.0s
+2026-09-15 00:46:48,373 [XPyPSoQq] #5   White f5g6   d15    n15.9M  nps1.3M   eval+2.69   15.3s
+2026-09-15 00:47:03,622 [XPyPSoQq] #6   White g6h7   d15    n34.8M  nps2.4M   eval+2.73   14.7s
+2026-09-15 00:47:21,917 [XPyPSoQq] #7   White h5g6   d11    n20.0M  nps2.6M   eval+3.46   13.9s
+2026-09-15 00:47:35,734 [XPyPSoQq] #8   White d1g4   d11    n29.6M  nps2.7M   eval+3.48   13.3s
+2026-09-15 00:52:54,318 [XPyPSoQq] Game over: white wins (outoftime)

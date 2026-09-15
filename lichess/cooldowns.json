@@ -1,7 +1,66 @@
 {
-  "maia9": "2026-09-15T06:41:29.556Z",
-  "garbobot": "2026-09-15T07:10:47.659Z",
-  "bottios": "2026-09-15T06:45:41.43Z",
-  "jibbby": "2026-09-15T07:50:44.067Z",
-  "maia5": "2026-09-15T06:40:54.2Z"
+  "maia3-79m_800": {
+    "until": "2026-10-14T22:44:51.579532+00:00",
+    "reason": "declined:nobot"
+  },
+  "hummus-bot": {
+    "until": "2026-10-14T22:44:57.516495+00:00",
+    "reason": "declined:nobot"
+  },
+  "demolito_l5": {
+    "until": "2026-10-14T22:44:58.142305+00:00",
+    "reason": "declined:nobot"
+  },
+  "demolito_l3": {
+    "until": "2026-10-14T22:44:58.143171+00:00",
+    "reason": "declined:nobot"
+  },
+  "fathzer-jchess": {
+    "until": "2026-10-14T22:45:03.791557+00:00",
+    "reason": "declined:nobot"
+  },
+  "leelajester": {
+    "until": "2026-10-14T22:45:04.250829+00:00",
+    "reason": "declined:nobot"
+  },
+  "maia2200_10n": {
+    "until": "2026-10-14T22:45:23.311333+00:00",
+    "reason": "declined:nobot"
+  },
+  "panic-fish": {
+    "until": "2026-10-14T22:45:35.182943+00:00",
+    "reason": "declined:nobot"
+  },
+  "catriever": {
+    "until": "2026-10-14T22:45:41.259712+00:00",
+    "reason": "declined:nobot"
+  },
+  "maia3-79m_1200": {
+    "until": "2026-10-14T22:45:47.745260+00:00",
+    "reason": "declined:nobot"
+  },
+  "demolito_l2": {
+    "until": "2026-10-14T22:46:13.311212+00:00",
+    "reason": "declined:nobot"
+  },
+  "jangine": {
+    "until": "2026-09-15T17:57:48.779400+00:00",
+    "reason": "just-played"
+  },
+  "maia9_10n": {
+    "until": "2026-10-14T22:46:44.596302+00:00",
+    "reason": "declined:nobot"
+  },
+  "leelaalien": {
+    "until": "2026-10-14T22:46:50.775052+00:00",
+    "reason": "declined:nobot"
+  },
+  "cosettebot": {
+    "until": "2026-09-15T17:58:04.131225+00:00",
+    "reason": "just-played"
+  },
+  "baby_eubos": {
+    "until": "2026-09-15T17:58:19.817758+00:00",
+    "reason": "just-played"
+  }
 }

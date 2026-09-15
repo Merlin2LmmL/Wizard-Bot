@@ -1,0 +1,50 @@
+2026-09-15 19:55:48,898 ==============================================================================
+2026-09-15 19:55:48,898 [vKqQTou6] PlayAgainstMyBot (1547) vs jangine (1984)  |  rated Standard  |  3000+0  |  playing white
+2026-09-15 19:55:48,899 ==============================================================================
+2026-09-15 19:55:50,700 [vKqQTou6] #1   White e2e4   d-     n-      nps-      eval-        1.8s
+2026-09-15 19:55:52,249 [vKqQTou6] #2   White d2d4   d-     n-      nps-      eval-        1.1s
+2026-09-15 19:55:53,253 [vKqQTou6] #3   White b1c3   d-     n-      nps-      eval-        0.9s
+2026-09-15 19:55:53,904 [vKqQTou6] #4   White e4e5   d-     n-      nps-      eval-        0.5s
+2026-09-15 19:55:54,289 [vKqQTou6] #5   White a2a3   d-     n-      nps-      eval-        0.3s
+2026-09-15 19:55:54,403 [vKqQTou6] #6   White b2c3   d-     n-      nps-      eval-        0.0s
+2026-09-15 19:55:54,968 [vKqQTou6] #7   White d1g4   d-     n-      nps-      eval-        0.5s
+2026-09-15 19:56:03,909 [vKqQTou6] #8   White f1d3   d9     n2.2M   nps245.1k eval-0.20    8.8s
+2026-09-15 19:56:12,439 [vKqQTou6] #9   White g4f4   d10    n1.6M   nps187.2k eval+0.26    8.4s
+2026-09-15 19:56:21,690 [vKqQTou6] #10  White c3d4   d10    n1.0M   nps132.7k eval+0.35    8.0s
+2026-09-15 19:56:31,091 [vKqQTou6] #11  White g1e2   d10    n1.3M   nps172.7k eval+0.36    7.5s
+2026-09-15 19:56:39,932 [vKqQTou6] #12  White c1d2   d7     n648.9k nps90.7k  eval+0.40    7.2s
+2026-09-15 19:56:48,387 [vKqQTou6] #13  White e5f6   d8     n884.3k nps128.8k eval+0.38    6.9s
+2026-09-15 19:56:55,897 [vKqQTou6] #14  White f4f3   d7     n749.8k nps116.6k eval+0.36    6.4s
+2026-09-15 19:57:04,163 [vKqQTou6] #15  White d3f5   d8     n590.8k nps95.9k  eval+0.48    6.2s
+2026-09-15 19:57:12,493 [vKqQTou6] #16  White f3c3   d9     n676.8k nps116.7k eval+0.43    5.8s
+2026-09-15 19:57:20,300 [vKqQTou6] #17  White d4e5   d6     n209.4k nps117.9k eval+0.48    5.5s
+2026-09-15 19:57:26,588 [vKqQTou6] #18  White d2f4   d7     n623.6k nps117.7k eval+0.50    5.3s
+2026-09-15 19:57:33,124 [vKqQTou6] #19  White a1b1   d7     n964.2k nps191.8k eval+0.36    5.0s
+2026-09-15 19:57:40,019 [vKqQTou6] #20  White f2f3   d8     n415.1k nps85.8k  eval+0.40    4.8s
+2026-09-15 19:57:47,144 [vKqQTou6] #21  White c3d2   d7     n537.1k nps119.3k eval+0.40    4.5s
+2026-09-15 19:57:53,497 [vKqQTou6] #22  White e1f2   d6     n729.8k nps170.2k eval+0.00    4.3s
+2026-09-15 19:57:58,874 [vKqQTou6] #23  White d2d3   d7     n376.1k nps124.4k eval+0.09    4.0s
+2026-09-15 19:58:03,828 [vKqQTou6] #24  White f4c1   d6     n553.2k nps189.9k eval+0.20    3.9s
+2026-09-15 19:58:10,288 [vKqQTou6] #25  White e2d4   d5     n494.4k nps136.4k eval+0.25    3.6s
+2026-09-15 19:58:16,117 [vKqQTou6] #26  White d4b3   d7     n690.2k nps197.4k eval+0.46    3.5s
+2026-09-15 19:58:20,580 [vKqQTou6] #27  White d3d1   d10    n517.4k nps163.0k eval-0.33    3.3s
+2026-09-15 19:58:25,082 [vKqQTou6] #28  White b3a5   d10    n187.3k nps110.2k eval+0.89    3.1s
+2026-09-15 19:58:30,927 [vKqQTou6] #29  White d1d2   d12    n472.5k nps160.3k eval-0.41    2.9s
+2026-09-15 19:58:38,014 [vKqQTou6] #30  White d2e2   d12    n47.4k  nps87.6k  eval-0.67    2.8s
+2026-09-15 19:58:42,325 [vKqQTou6] #31  White a5c6   d11    n301.7k nps113.7k eval-0.67    2.7s
+2026-09-15 19:58:49,169 [vKqQTou6] #32  White h1c1   d10    n288.8k nps114.1k eval-0.67    2.5s
+2026-09-15 19:58:52,679 [vKqQTou6] #33  White c6e5   d9     n325.0k nps134.6k eval-0.25    2.4s
+2026-09-15 19:58:57,072 [vKqQTou6] #34  White f2e3   d8     n530.0k nps231.0k eval-0.01    2.3s
+2026-09-15 19:59:01,948 [vKqQTou6] #35  White e3d4   d8     n476.5k nps220.8k eval+0.01    2.2s
+2026-09-15 19:59:06,346 [vKqQTou6] #36  White c1a1   d8     n473.9k nps230.7k eval+0.00    2.1s
+2026-09-15 19:59:10,446 [vKqQTou6] #37  White a1a2   d8     n300.2k nps195.9k eval+0.38    2.0s
+2026-09-15 19:59:13,632 [vKqQTou6] #38  White e5d3   d8     n162.0k nps88.5k  eval+0.66    1.8s
+2026-09-15 19:59:17,365 [vKqQTou6] #39  White d4e5   d9     n131.7k nps98.9k  eval+0.54    1.8s
+2026-09-15 19:59:21,773 [vKqQTou6] #40  White e5d6   d7     n129.0k nps106.8k eval+1.02    1.7s
+2026-09-15 19:59:26,611 [vKqQTou6] #41  White d6e7   d7     n46.3k  nps127.9k eval+0.50    1.6s
+2026-09-15 19:59:29,817 [vKqQTou6] #42  White d3e5   d7     n198.6k nps229.0k eval+0.81    1.5s
+2026-09-15 19:59:33,663 [vKqQTou6] #43  White e7f6   d8     n333.1k nps302.6k eval+0.95    1.4s
+2026-09-15 19:59:36,753 [vKqQTou6] #44  White e5f7   d8     n145.2k nps116.1k eval+1.55    1.4s
+2026-09-15 19:59:40,292 [vKqQTou6] #45  White g2g4   d7     n332.9k nps262.2k eval#+1      1.3s
+2026-09-15 19:59:42,116 [vKqQTou6] #46  White (none) d0     n-      nps-      eval#+0      0.0s
+2026-09-15 20:00:15,485 [vKqQTou6] Game over: black wins (outoftime)

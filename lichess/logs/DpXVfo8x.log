@@ -1,0 +1,53 @@
+2026-09-15 00:45:35,086 ==============================================================================
+2026-09-15 00:45:35,087 [DpXVfo8x] PlayAgainstMyBot (1555) vs turochamp-1ply (1250)  |  rated Standard  |  3000+2000  |  playing white
+2026-09-15 00:45:35,087 ==============================================================================
+2026-09-15 00:45:36,148 [DpXVfo8x] #1   White e2e4   d-     n-      nps-      eval-        1.1s
+2026-09-15 00:45:37,775 [DpXVfo8x] #2   White d2d4   d-     n-      nps-      eval-        0.6s
+2026-09-15 00:45:48,605 [DpXVfo8x] #3   White c1d2   d15    n25.5M  nps2.4M   eval-0.12   10.6s
+2026-09-15 00:45:59,375 [DpXVfo8x] #4   White g1f3   d14    n34.4M  nps3.4M   eval-0.12   10.2s
+2026-09-15 00:46:09,717 [DpXVfo8x] #5   White d2b4   d15    n27.3M  nps2.8M   eval-0.07    9.8s
+2026-09-15 00:46:19,321 [DpXVfo8x] #6   White b1c3   d14    n16.2M  nps2.5M   eval-0.07    9.4s
+2026-09-15 00:46:28,569 [DpXVfo8x] #7   White f1e2   d13    n31.3M  nps3.5M   eval+0.42    9.0s
+2026-09-15 00:46:37,456 [DpXVfo8x] #8   White d1d2   d13    n33.1M  nps3.8M   eval+0.54    8.7s
+2026-09-15 00:46:46,026 [DpXVfo8x] #9   White e1g1   d13    n26.2M  nps3.1M   eval+0.52    8.3s
+2026-09-15 00:46:54,262 [DpXVfo8x] #10  White f1c1   d13    n19.6M  nps2.6M   eval+0.52    8.0s
+2026-09-15 00:47:02,208 [DpXVfo8x] #11  White a2a3   d13    n8.7M   nps1.5M   eval+0.57    7.7s
+2026-09-15 00:47:09,874 [DpXVfo8x] #12  White d2f4   d13    n19.8M  nps3.1M   eval+0.44    7.4s
+2026-09-15 00:47:21,922 [DpXVfo8x] #13  White e2d3   d12    n14.7M  nps2.1M   eval+0.49    6.9s
+2026-09-15 00:47:28,959 [DpXVfo8x] #14  White c1e1   d12    n17.1M  nps2.6M   eval+0.61    6.7s
+2026-09-15 00:47:35,629 [DpXVfo8x] #15  White d4e5   d14    n7.9M   nps1.3M   eval+1.54    6.4s
+2026-09-15 00:47:42,080 [DpXVfo8x] #16  White f4e5   d15    n9.9M   nps1.6M   eval+1.64    6.2s
+2026-09-15 00:47:48,306 [DpXVfo8x] #17  White d3a6   d12    n18.1M  nps3.0M   eval+1.56    6.0s
+2026-09-15 00:47:54,340 [DpXVfo8x] #18  White f3e5   d15    n5.3M   nps2.2M   eval+1.66    5.8s
+2026-09-15 00:48:00,165 [DpXVfo8x] #19  White a1d1   d14    n17.4M  nps3.6M   eval+1.67    5.6s
+2026-09-15 00:48:05,816 [DpXVfo8x] #20  White d1d8   d14    n20.6M  nps3.8M   eval+2.21    5.4s
+2026-09-15 00:48:11,404 [DpXVfo8x] #21  White d8d6   d13    n7.1M   nps1.3M   eval+3.23    5.2s
+2026-09-15 00:48:16,692 [DpXVfo8x] #22  White e5c4   d17    n13.7M  nps3.5M   eval+3.18    5.1s
+2026-09-15 00:48:21,830 [DpXVfo8x] #23  White c4a5   d14    n15.9M  nps4.4M   eval+3.23    4.9s
+2026-09-15 00:48:26,816 [DpXVfo8x] #24  White f2f3   d15    n22.3M  nps4.7M   eval+3.28    4.8s
+2026-09-15 00:48:31,676 [DpXVfo8x] #25  White e1d1   d13    n16.2M  nps5.3M   eval+3.64    4.6s
+2026-09-15 00:48:36,404 [DpXVfo8x] #26  White a5c6   d15    n10.6M  nps2.6M   eval+4.26    4.5s
+2026-09-15 00:48:40,986 [DpXVfo8x] #27  White e4d5   d17    n11.8M  nps4.7M   eval+4.26    4.4s
+2026-09-15 00:48:45,473 [DpXVfo8x] #28  White d5d6   d14    n23.8M  nps5.6M   eval+4.33    4.3s
+2026-09-15 00:48:49,822 [DpXVfo8x] #29  White g1f2   d14    n22.2M  nps5.4M   eval+4.87    4.1s
+2026-09-15 00:48:54,070 [DpXVfo8x] #30  White c3d5   d13    n18.9M  nps4.7M   eval+5.57    4.0s
+2026-09-15 00:48:58,216 [DpXVfo8x] #31  White d5e7   d13    n12.8M  nps4.7M   eval+6.54    3.9s
+2026-09-15 00:49:02,256 [DpXVfo8x] #32  White d1d4   d13    n11.4M  nps3.0M   eval+6.86    3.8s
+2026-09-15 00:49:06,225 [DpXVfo8x] #33  White d4c4   d12    n4.2M   nps2.7M   eval+6.86    3.7s
+2026-09-15 00:49:10,090 [DpXVfo8x] #34  White c4c5   d13    n9.3M   nps3.3M   eval+7.24    3.6s
+2026-09-15 00:49:13,983 [DpXVfo8x] #35  White e7f5   d12    n8.4M   nps3.0M   eval+7.25    3.6s
+2026-09-15 00:49:17,708 [DpXVfo8x] #36  White f5h6   d13    n18.9M  nps5.4M   eval+7.26    3.5s
+2026-09-15 00:49:21,320 [DpXVfo8x] #37  White h6g4   d15    n15.1M  nps5.2M   eval+7.19    3.4s
+2026-09-15 00:49:24,875 [DpXVfo8x] #38  White g4e3   d12    n2.4M   nps2.4M   eval+8.44    3.3s
+2026-09-15 00:49:28,353 [DpXVfo8x] #39  White e3f5   d13    n4.2M   nps2.0M   eval+13.17   3.3s
+2026-09-15 00:49:31,770 [DpXVfo8x] #40  White f5d6   d14    n3.2M   nps2.6M   eval+13.21   3.2s
+2026-09-15 00:49:35,123 [DpXVfo8x] #41  White c5c7   d13    n7.6M   nps2.7M   eval+14.34   3.1s
+2026-09-15 00:49:38,413 [DpXVfo8x] #42  White c7f7   d13    n7.4M   nps2.4M   eval+14.54   3.1s
+2026-09-15 00:49:41,648 [DpXVfo8x] #43  White f3f4   d11    n20.4M  nps6.7M   eval+16.65   3.0s
+2026-09-15 00:49:44,825 [DpXVfo8x] #44  White f4f5   d15    n15.5M  nps5.2M   eval+19.64   3.0s
+2026-09-15 00:49:48,010 [DpXVfo8x] #45  White f2f3   d17    n10.9M  nps3.7M   eval+20.63   2.9s
+2026-09-15 00:49:51,099 [DpXVfo8x] #46  White d6e4   d13    n18.4M  nps6.4M   eval#+4      2.9s
+2026-09-15 00:49:54,132 [DpXVfo8x] #47  White f7h7   d14    n15.8M  nps6.0M   eval#+2      2.8s
+2026-09-15 00:49:57,126 [DpXVfo8x] #48  White g2g4   d13    n17.6M  nps6.3M   eval#+1      2.8s
+2026-09-15 00:49:57,336 [DpXVfo8x] #49  White (none) d0     n-      nps-      eval#+0      0.0s
+2026-09-15 00:50:23,275 [DpXVfo8x] Game over: black wins (outoftime)

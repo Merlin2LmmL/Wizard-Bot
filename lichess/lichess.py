@@ -34,7 +34,7 @@ import subprocess
 import threading
 import time
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 import requests
@@ -43,10 +43,23 @@ LICHESS_BASE = "https://lichess.org"
 COOLDOWN_FILE = "cooldowns.json"
 LOG_DIR = "logs"
 LOG = logging.getLogger("lichess_bot")
+
+
+def _parse_iso(value: Optional[str]):
+    """Tolerant ISO-8601 parse (Lichess sends both 'Z' and '+00:00' forms).
+    Returns None on anything unparseable so callers can treat it as 'no
+    cooldown' rather than blowing up mid-poll."""
+    if not value:
+        return None
+    try:
+        dt = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
 # Bumped whenever the autoqueue/engine-lifecycle logic changes, and printed at
 # startup — makes it trivial to confirm you're actually running the file you
 # think you are, instead of debugging symptoms from an old copy.
-SCRIPT_VERSION = "2026-09-14.3-pending-challenge-fix"
+SCRIPT_VERSION = "2026-09-15.2-no-startup-delay"
 
 
 class ConsoleFormatter(logging.Formatter):
@@ -172,10 +185,48 @@ def _format_time_control(tc: dict) -> str:
     return f"{tc['limit'] // 60}+{tc['increment']}"
 
 
+def _tc_total(tc: Optional[dict]) -> int:
+    """Lichess's own 'estimated game length' metric: base + 40 moves of
+    increment. Used to order time controls when a bot says 'too fast'."""
+    if not tc:
+        return 0
+    return tc["limit"] + 40 * tc["increment"]
+
+
+def _tc_from_event(challenge: dict) -> Optional[dict]:
+    """Pull {"limit", "increment"} out of a challenge event payload."""
+    tc = (challenge or {}).get("timeControl") or {}
+    if "limit" in tc:
+        return {"limit": int(tc["limit"]), "increment": int(tc.get("increment", 0))}
+    return None
+
+
+def _normalize_decline_key(reason_key: Optional[str], reason_text: Optional[str] = None) -> str:
+    """Lichess sends declineReasonKey ('tooFast') on most declines, but not
+    all clients set one, in which case only the human-readable declineReason
+    comes through. Fall back to matching that text so a bot saying 'this time
+    control is too fast for me' still costs it the right cooldown."""
+    if reason_key:
+        return re.sub(r"[^a-z]", "", reason_key.lower())
+    text = (reason_text or "").lower()
+    for needle, key in (("too fast", "toofast"), ("too slow", "tooslow"),
+                        ("time control", "timecontrol"), ("bot", "nobot"),
+                        ("rated", "rated"), ("casual", "casual"),
+                        ("variant", "variant"), ("later", "later")):
+        if needle in text:
+            return key
+    return "generic"
+
+
 @dataclass
 class AutoQueueRules:
     enabled: bool = False
     poll_interval_secs: int = 90
+    startup_delay_secs: int = 300        # stay quiet this long after process start before
+                                           # the first autoqueue pass, regardless of how
+                                           # clean /api/account looked — the challenge
+                                           # endpoint is a separate, stricter bucket and
+                                           # this is not the request to test it with
     max_pending_challenges: int = 3
     variant: str = "standard"
     # One or more time controls to rotate through when auto-queueing, so a
@@ -187,6 +238,12 @@ class AutoQueueRules:
     candidates_per_poll: int = 50         # how many online bots to fetch each pass
     min_seconds_between_challenges: int = 20
     rating_range: RatingRange = field(default_factory=RatingRange)
+    pending_timeout_secs: int = 25        # cancel an outgoing challenge this long after
+                                           # sending it if the opponent hasn't reacted
+    ignored_cooldown_secs: int = 1800     # ...and park that (bot, time control) pair for
+                                           # this long, since silence means "not playing"
+    played_cooldown_secs: int = 120       # short rematch cooldown after a game with a bot
+    bot_list_cache_secs: int = 10         # reuse /api/bot/online results for this long
     min_games: int = 0                    # skip candidates with fewer games in this
                                            # speed/variant than this — a bot's rating
                                            # there is otherwise just an untested default
@@ -241,17 +298,79 @@ class BotConfig:
 # Rate limiter / cooldown bookkeeping
 # --------------------------------------------------------------------------- #
 
+class MoveRateLimiter:
+    """A much smaller backoff for the move endpoint specifically. Moves are
+    time-critical — the game clock runs during any wait we impose on
+    ourselves — so this deliberately does NOT apply Lichess's general "wait a
+    full minute" guidance or the challenge circuit breaker. A 429 here should
+    be rare (one move at a time, human-paced), and a short, cheap retry costs
+    far less than sitting out 60s of someone's clock."""
+
+    def __init__(self, base: float = 1.0, max_backoff: float = 8.0):
+        self._lock = threading.Lock()
+        self._blocked_until = 0.0
+        self._base = base
+        self._max = max_backoff
+        self._backoff = base
+
+    def wait_if_blocked(self):
+        with self._lock:
+            remaining = self._blocked_until - time.time()
+        if remaining > 0:
+            time.sleep(remaining)
+
+    def note_response(self, resp: requests.Response):
+        if resp.status_code == 429:
+            with self._lock:
+                self._blocked_until = time.time() + self._backoff
+                self._backoff = min(self._backoff * 2, self._max)
+            LOG.warning("Move endpoint 429 — brief %.1fs backoff (moves only, "
+                        "not treated as a global rate-limit signal)", self._backoff)
+        elif resp.ok:
+            with self._lock:
+                self._backoff = self._base
+
+
 class RateLimiter:
     """Global outgoing-request guard. Trips on HTTP 429, backs off exponentially,
     and blocks all *new* outgoing requests (challenges, autoqueue, etc.) until the
-    backoff window passes. Doesn't touch already-open game move/event streams."""
+    backoff window passes. Doesn't touch already-open game move/event streams.
+
+    Two things Lichess's own API guidance is explicit about, that this class
+    must not violate:
+      - "If you receive an HTTP response with a 429 status, please wait a full
+        minute before resuming API usage." So the floor on any 429 is 60s,
+        regardless of base_backoff_secs in config or a short/missing
+        Retry-After header.
+      - Repeated challenge-endpoint abuse is reported to draw much longer,
+        hours-scale blocks. A handful of 429s close together is a strong
+        enough signal to stop autoqueue outright for a while, not just to
+        sleep a bit and try again.
+
+    The backoff must not decay on unrelated traffic. A move request in an
+    active game succeeding tells you nothing about whether the challenge
+    endpoint has forgiven you; resetting on *any* 2xx respawns the same
+    5s-then-10s oscillation you'd get with no backoff at all, since some
+    move request succeeds within a second or two of almost every 429. Decay
+    is instead time-based: backoff only relaxes once enough clean time has
+    passed since the *last* 429.
+    """
+
+    LICHESS_MIN_BACKOFF = 60.0   # floor per lichess.org/page/api-tips
+    DECAY_AFTER_SECS = 120.0     # this long with no 429 before backoff shrinks
+    TRIP_WINDOW_SECS = 90.0      # 429s within this window of each other count
+                                  # as "consecutive" for the circuit breaker
+    TRIP_THRESHOLD = 3           # this many consecutive 429s trips it
+    CIRCUIT_BREAK_SECS = 1800.0  # ...and this pauses ALL outgoing requests
 
     def __init__(self, base_backoff: float, max_backoff: float):
         self._lock = threading.Lock()
         self._blocked_until = 0.0
-        self._backoff = base_backoff
-        self._base = base_backoff
-        self._max = max_backoff
+        self._backoff = max(base_backoff, self.LICHESS_MIN_BACKOFF)
+        self._base = self._backoff
+        self._max = max(max_backoff, self._backoff)
+        self._last_429_ts = 0.0
+        self._consecutive_429 = 0
 
     def wait_if_blocked(self):
         while True:
@@ -263,93 +382,184 @@ class RateLimiter:
             time.sleep(min(remaining, 5.0))
 
     def note_response(self, resp: requests.Response):
+        now = time.time()
         if resp.status_code == 429:
             retry_after = resp.headers.get("Retry-After")
             with self._lock:
-                if retry_after:
-                    try:
-                        delay = float(retry_after)
-                    except ValueError:
-                        delay = self._backoff
+                if now - self._last_429_ts <= self.TRIP_WINDOW_SECS:
+                    self._consecutive_429 += 1
                 else:
-                    delay = self._backoff
-                self._blocked_until = time.time() + delay
+                    self._consecutive_429 = 1
+                self._last_429_ts = now
+                try:
+                    header_delay = float(retry_after) if retry_after else 0.0
+                except ValueError:
+                    header_delay = 0.0
+                # Never trust a Retry-After shorter than Lichess's own stated
+                # floor, and never let it shorten our own backoff either.
+                delay = max(header_delay, self._backoff, self.LICHESS_MIN_BACKOFF)
+                if self._consecutive_429 >= self.TRIP_THRESHOLD:
+                    delay = max(delay, self.CIRCUIT_BREAK_SECS)
+                    LOG.error("Got 429 (%d in a row) — this looks like real abuse "
+                              "flagging, not a one-off. Pausing ALL outgoing "
+                              "requests for %.0f min.",
+                              self._consecutive_429, delay / 60)
+                else:
+                    LOG.error("Got 429 (%d in a row) — backing off %.0fs",
+                              self._consecutive_429, delay)
+                self._blocked_until = now + delay
                 self._backoff = min(self._backoff * 2, self._max)
-            LOG.error("Got 429 — backing off %.1fs (next backoff %.1fs)", delay, self._backoff)
         elif resp.ok:
             with self._lock:
-                self._backoff = self._base  # reset on any success
+                if now - self._last_429_ts > self.DECAY_AFTER_SECS:
+                    self._backoff = self._base
+                    self._consecutive_429 = 0
 
 
 class CooldownStore:
-    """Persisted {username: iso_timestamp} of bots we should not challenge yet."""
+    """Persisted cooldowns for outgoing challenges, at two granularities:
+
+      user-level:  "maia9_10n"      -> don't challenge this bot at all yet
+      per-TC:      "maia9_10n|5+3"  -> don't challenge this bot at *this* time
+                                       control yet (it's fine at others)
+
+    Per-TC entries are what stop the classic failure mode of re-offering 5+3
+    to a bot that has already told us it won't play 5+3, while still letting
+    us try it at 1+1.
+
+    On-disk format is {key: {"until": iso, "reason": str}}. The old format
+    ({username: iso}) still loads.
+    """
 
     _TS_RE = re.compile(r"please wait until ([0-9T:\.\-Z]+)")
 
     def __init__(self, path: str):
         self.path = path
         self._lock = threading.Lock()
-        self._data: dict[str, str] = {}
+        self._data: dict[str, dict] = {}
         self._load()
 
+    # -- keys / persistence ----------------------------------------------
+    @staticmethod
+    def _key(username: str, tc: Optional[dict] = None) -> str:
+        base = username.lower()
+        return f"{base}|{_format_time_control(tc)}" if tc else base
+
     def _load(self):
-        if os.path.exists(self.path):
-            try:
-                with open(self.path) as f:
-                    self._data = json.load(f)
-            except (json.JSONDecodeError, OSError):
-                self._data = {}
-
-    def _save(self):
-        with open(self.path, "w") as f:
-            json.dump(self._data, f, indent=2)
-
-    def is_cooling_down(self, username: str) -> bool:
-        with self._lock:
-            until = self._data.get(username.lower())
-        if not until:
-            return False
+        if not os.path.exists(self.path):
+            return
         try:
-            dt = datetime.fromisoformat(until.replace("Z", "+00:00"))
-        except ValueError:
-            return False
-        return datetime.now(timezone.utc) < dt
+            with open(self.path) as f:
+                raw = json.load(f)
+        except (json.JSONDecodeError, OSError):
+            return
+        for k, v in (raw or {}).items():
+            if isinstance(v, str):          # legacy {"name": iso}
+                self._data[k] = {"until": v, "reason": "legacy"}
+            elif isinstance(v, dict) and "until" in v:
+                self._data[k] = v
 
-    def set_cooldown(self, username: str, until_iso: str):
+    def _save_locked(self):
+        now = datetime.now(timezone.utc)
+        self._data = {k: v for k, v in self._data.items()
+                      if _parse_iso(v.get("until")) is None or _parse_iso(v["until"]) > now}
+        try:
+            with open(self.path, "w") as f:
+                json.dump(self._data, f, indent=2)
+        except OSError as exc:
+            LOG.warning("Could not write %s: %s", self.path, exc)
+
+    # -- queries ----------------------------------------------------------
+    def _active(self, key: str) -> bool:
         with self._lock:
-            self._data[username.lower()] = until_iso
-            self._save()
-        LOG.info("Cooldown: won't challenge %s again until %s", username, until_iso)
+            entry = self._data.get(key)
+        if not entry:
+            return False
+        until = _parse_iso(entry.get("until"))
+        if until is None:
+            return False
+        return datetime.now(timezone.utc) < until
 
-    def record_from_error_text(self, username: str, text: str) -> bool:
-        """Look for '...please wait until <ISO timestamp>...' in an API error body
-        and, if found, store it. Returns True if a cooldown was recorded."""
-        m = self._TS_RE.search(text)
+    def is_cooling_down(self, username: str, tc: Optional[dict] = None) -> bool:
+        """True if this bot is parked, either wholesale or for this specific
+        time control."""
+        if self._active(self._key(username)):
+            return True
+        return bool(tc) and self._active(self._key(username, tc))
+
+    # -- mutation ---------------------------------------------------------
+    def block(self, username: str, seconds: Optional[float] = None,
+              until_iso: Optional[str] = None, reason: str = "",
+              tc: Optional[dict] = None):
+        """Park a bot (optionally only at one time control). The longer of the
+        existing and the new cooldown wins, so a 30-day 'noBot' block is never
+        shortened by a later 15-minute 'later'."""
+        if until_iso is None:
+            secs = 1800 if seconds is None else seconds
+            until_iso = (datetime.now(timezone.utc)
+                         + timedelta(seconds=secs)).isoformat()
+        key = self._key(username, tc)
+        new_until = _parse_iso(until_iso)
+        with self._lock:
+            existing = _parse_iso((self._data.get(key) or {}).get("until"))
+            if existing and new_until and existing >= new_until:
+                return
+            self._data[key] = {"until": until_iso, "reason": reason}
+            self._save_locked()
+        scope = f"{username} @ {_format_time_control(tc)}" if tc else username
+        LOG.info("Cooldown: %s until %s (%s)", scope, until_iso[:19], reason or "unspecified")
+
+    def record_from_error_text(self, username: str, text: str,
+                               tc: Optional[dict] = None) -> bool:
+        """Look for '...please wait until <ISO timestamp>...' in an API error
+        body and, if found, store it. Returns True if a cooldown was
+        recorded."""
+        m = self._TS_RE.search(text or "")
         if m:
-            self.set_cooldown(username, m.group(1))
+            self.block(username, until_iso=m.group(1), reason="lichess-wait")
             return True
         return False
-
 
 # --------------------------------------------------------------------------- #
 # Lichess API wrapper
 # --------------------------------------------------------------------------- #
 
 class LichessAPI:
-    def __init__(self, token: str, limiter: RateLimiter):
+    """Bucket policy: Lichess enforces separate rate limits per endpoint family,
+    and this client mirrors that split rather than pooling everything into one
+    limiter. That split matters most for "move": it's the one call where
+    holding off for even the standard 60s floor is actively dangerous — the
+    game clock doesn't pause for our backoff, so a move blocked behind a
+    challenge-endpoint circuit break can lose the game on time even though
+    the two endpoints were never related. "challenge" gets the strict,
+    slow-to-forgive limiter since that's the one with reports of hours-scale
+    blocks on repeated abuse. Everything else (accept/decline/cancel,
+    online_bots, account) shares "general", which is fully separate from both.
+    """
+
+    def __init__(self, token: str, base_backoff: float, max_backoff: float):
         self.session = requests.Session()
         self.session.headers.update({"Authorization": f"Bearer {token}"})
-        self.limiter = limiter
+        self.limiters = {
+            "challenge": RateLimiter(base_backoff, max_backoff),
+            "general": RateLimiter(base_backoff, max_backoff),
+            # Deliberately not RateLimiter: no 60s floor, no circuit breaker.
+            # A 429 here should almost never happen (moves are per-game, one
+            # at a time, human-paced), and if it does, a short wait costs far
+            # less than a flag-fall.
+            "move": MoveRateLimiter(),
+        }
 
-    def _request(self, method: str, path: str, max_attempts: int = 5,
-                 **kwargs) -> requests.Response:
+    def _request(self, method: str, path: str, bucket: str = "general",
+                 max_attempts: int = 5, **kwargs) -> requests.Response:
         """Send a request, retrying on transient network errors (DNS blips,
         dropped connections, timeouts) with short exponential backoff. This is
         separate from RateLimiter, which only reacts to HTTP 429 — this handles
         the case where the request never even got a response."""
+        limiter = self.limiters[bucket]
         backoff = 1.0
         for attempt in range(1, max_attempts + 1):
-            self.limiter.wait_if_blocked()
+            limiter.wait_if_blocked()
             try:
                 resp = self.session.request(method, LICHESS_BASE + path, timeout=30, **kwargs)
             except requests.exceptions.RequestException as e:
@@ -362,17 +572,19 @@ class LichessAPI:
                 time.sleep(backoff)
                 backoff = min(backoff * 2, 30.0)
                 continue
-            self.limiter.note_response(resp)
+            limiter.note_response(resp)
             return resp
 
     def stream_lines(self, path: str):
         """Yield decoded NDJSON lines from a streaming endpoint forever (with
-        auto-reconnect on drop)."""
+        auto-reconnect on drop). Uses the general bucket: streams are opened
+        once and held, not repeatedly hit, so they don't warrant their own."""
+        limiter = self.limiters["general"]
         while True:
-            self.limiter.wait_if_blocked()
+            limiter.wait_if_blocked()
             try:
                 with self.session.get(LICHESS_BASE + path, stream=True, timeout=None) as resp:
-                    self.limiter.note_response(resp)
+                    limiter.note_response(resp)
                     if resp.status_code == 429:
                         continue
                     for line in resp.iter_lines():
@@ -399,15 +611,18 @@ class LichessAPI:
 
     # -- challenges -----------------------------------------------------------
     def accept_challenge(self, challenge_id: str) -> requests.Response:
-        return self._request("POST", f"/api/challenge/{challenge_id}/accept")
+        return self._request("POST", f"/api/challenge/{challenge_id}/accept", bucket="challenge")
 
     def decline_challenge(self, challenge_id: str, reason: str) -> requests.Response:
         return self._request("POST", f"/api/challenge/{challenge_id}/decline",
-                              data={"reason": reason})
+                              bucket="challenge", data={"reason": reason})
+
+    def cancel_challenge(self, challenge_id: str) -> requests.Response:
+        return self._request("POST", f"/api/challenge/{challenge_id}/cancel", bucket="challenge")
 
     def create_challenge(self, username: str, rated: bool, clock_limit: int,
                           clock_increment: int, variant: str = "standard") -> requests.Response:
-        return self._request("POST", f"/api/challenge/{username}", data={
+        return self._request("POST", f"/api/challenge/{username}", bucket="challenge", data={
             "rated": str(rated).lower(),
             "clock.limit": clock_limit,
             "clock.increment": clock_increment,
@@ -417,7 +632,7 @@ class LichessAPI:
 
     # -- games ------------------------------------------------------------
     def make_move(self, game_id: str, uci_move: str) -> requests.Response:
-        return self._request("POST", f"/api/bot/game/{game_id}/move/{uci_move}")
+        return self._request("POST", f"/api/bot/game/{game_id}/move/{uci_move}", bucket="move")
 
 
 # --------------------------------------------------------------------------- #
@@ -710,14 +925,18 @@ class GameSession(threading.Thread):
 class LichessBot:
     def __init__(self, cfg: BotConfig):
         self.cfg = cfg
-        self.limiter = RateLimiter(cfg.base_backoff_secs, cfg.max_backoff_secs)
-        self.api = LichessAPI(cfg.token, self.limiter)
+        self.api = LichessAPI(cfg.token, cfg.base_backoff_secs, cfg.max_backoff_secs)
         self.cooldowns = CooldownStore(cfg.cooldown_file)
         self.games_lock = threading.Lock()
         self.active_games: dict[str, GameSession] = {}
-        self.pending_challenges = 0
-        self.pending_challenge_targets: dict[str, str] = {}  # challenge_id -> username, autoqueue only
+        # key -> {"user": str, "tc": dict, "ts": float, "id": Optional[str]}
+        # The key is the Lichess challenge id when we got one, otherwise a
+        # synthetic local id so an unparsed response still blocks re-queueing
+        # the same opponent.
+        self.pending: dict[str, dict] = {}
         self.pending_lock = threading.Lock()
+        self._bots_cache: list[dict] = []
+        self._bots_cache_ts = 0.0
         self.my_id = ""
         self.my_perfs: dict = {}           # speed -> {"rating": int, ...}, from /api/account
         self._last_challenge_ts = 0.0
@@ -739,6 +958,16 @@ class LichessBot:
             LOG.warning("Second interrupt — forcing immediate exit (active games left mid-move).")
             os._exit(1)
         self.shutting_down.set()
+        # Outgoing challenges outlive the process on Lichess's side, so a bot
+        # accepting one after we've quit would start a game with nobody home.
+        with self.pending_lock:
+            outstanding = [v["id"] for v in self.pending.values() if v.get("id")]
+            self.pending.clear()
+        for cid in outstanding:
+            try:
+                self.api.cancel_challenge(cid)
+            except Exception:
+                pass
         n = self._game_count()
         if n == 0:
             LOG.info("Shutdown requested, no active games — exiting now.")
@@ -812,32 +1041,31 @@ class LichessBot:
             # active_games dropped back down.
             opponent = (game.get("opponent") or {}).get("id", "")
             if opponent:
-                with self.pending_lock:
-                    matched_cid = next(
-                        (cid for cid, username in self.pending_challenge_targets.items()
-                         if username.lower() == opponent.lower()),
-                        None,
-                    )
-                    if matched_cid:
-                        self.pending_challenge_targets.pop(matched_cid, None)
-                        self.pending_challenges = max(0, self.pending_challenges - 1)
+                self._drop_pending(username=opponent)
+                # Short rematch cooldown: we just got a game out of this bot,
+                # give the queue a reason to spread out over other opponents
+                # before coming back.
+                self.cooldowns.block(opponent, seconds=self.cfg.autoqueue.played_cooldown_secs,
+                                     reason="just-played")
         elif etype == "challengeCanceled" or etype == "challengeDeclined":
-            cid = event.get("challenge", {}).get("id")
-            reason = (event.get("challenge", {}).get("declineReason")
-                      or event.get("challenge", {}).get("declineReasonKey"))
-            with self.pending_lock:
-                self.pending_challenges = max(0, self.pending_challenges - 1)
-                username = self.pending_challenge_targets.pop(cid, None) if cid else None
+            challenge = event.get("challenge", {}) or {}
+            cid = challenge.get("id")
+            reason_key = challenge.get("declineReasonKey")
+            reason_text = challenge.get("declineReason")
+            # destUser is the bot we challenged. Falling back to it matters:
+            # if our own id bookkeeping ever misses (unparsed create response,
+            # restart with challenges still open), this is the only way to
+            # learn *who* declined, and without it the same bot gets queued
+            # again on the very next pass. Forever.
+            dest = (challenge.get("destUser") or {}).get("id")
+            entry = self._drop_pending(challenge_id=cid, username=dest)
+            username = (entry or {}).get("user") or dest
+            tc = _tc_from_event(challenge) or (entry or {}).get("tc")
             if etype == "challengeDeclined" and username:
                 # A bot declining our outgoing challenge doesn't come back as
-                # an HTTP error — it's this async event — so without this the
-                # cooldown list never gets updated and we'd re-challenge the
-                # same bot again on the very next autoqueue pass.
-                until = datetime.now(timezone.utc).timestamp() + 3600
-                until_iso = datetime.fromtimestamp(until, tz=timezone.utc).isoformat()
-                self.cooldowns.set_cooldown(username, until_iso)
-                LOG.info("%s declined our challenge (%s) — cooling down 1h",
-                         username, reason or "no reason given")
+                # an HTTP error, it's this async event, so this is where the
+                # cooldown bookkeeping has to happen.
+                self._apply_decline(username, tc, reason_key, reason_text)
 
     def _handle_incoming_challenge(self, challenge: dict):
         cid = challenge["id"]
@@ -872,12 +1100,109 @@ class LichessBot:
         aq = self.cfg.autoqueue
         if not aq.enabled:
             return
+        if aq.startup_delay_secs > 0:
+            LOG.info("Autoqueue: waiting %ds before the first pass (startup grace period)",
+                     aq.startup_delay_secs)
+            self.shutting_down.wait(aq.startup_delay_secs)
         while not self.shutting_down.is_set():
             time.sleep(aq.poll_interval_secs)
             try:
+                self._reap_pending()
                 self._autoqueue_pass()
             except Exception:
                 LOG.exception("Autoqueue pass failed")
+
+    # -- pending-challenge bookkeeping ------------------------------------
+    def _drop_pending(self, challenge_id: Optional[str] = None,
+                      username: Optional[str] = None) -> Optional[dict]:
+        """Remove a pending challenge by id, or failing that by opponent, and
+        return what we knew about it."""
+        with self.pending_lock:
+            if challenge_id and challenge_id in self.pending:
+                return self.pending.pop(challenge_id)
+            if username:
+                key = next((k for k, v in self.pending.items()
+                            if v["user"].lower() == username.lower()), None)
+                if key:
+                    return self.pending.pop(key)
+        return None
+
+    def _reap_pending(self):
+        """Cancel challenges nobody reacted to. A bot that is online and simply
+        ignores us is indistinguishable from one that declines, except that it
+        never frees the slot on its own — so we time it out, cancel it server
+        side, and park that (bot, time control) pair."""
+        aq = self.cfg.autoqueue
+        now = time.time()
+        with self.pending_lock:
+            stale = [(k, v) for k, v in self.pending.items()
+                     if now - v["ts"] > aq.pending_timeout_secs]
+            for k, _ in stale:
+                self.pending.pop(k, None)
+        for key, entry in stale:
+            if entry.get("id"):
+                try:
+                    self.api.cancel_challenge(entry["id"])
+                except Exception:
+                    LOG.debug("Cancel of %s failed (probably already gone)", entry["id"])
+            LOG.info("%s ignored our %s challenge for %ds — cancelling",
+                     entry["user"], _format_time_control(entry["tc"]),
+                     aq.pending_timeout_secs)
+            self.cooldowns.block(entry["user"], seconds=aq.ignored_cooldown_secs,
+                                 reason="no-response", tc=entry["tc"])
+
+    # -- decline policy ----------------------------------------------------
+    # scope: "user" blocks the bot outright, "tc" only at that time control,
+    # "faster"/"slower" blocks that TC and everything faster/slower than it.
+    _DECLINE_POLICY: dict[str, tuple[str, int]] = {
+        "nobot":       ("user",   30 * 24 * 3600),
+        "onlybot":     ("user",   30 * 24 * 3600),
+        "variant":     ("user",    7 * 24 * 3600),
+        "standard":    ("user",    7 * 24 * 3600),
+        "rated":       ("user",         6 * 3600),
+        "casual":      ("user",         6 * 3600),
+        "timecontrol": ("tc",      7 * 24 * 3600),
+        "toofast":     ("faster",      24 * 3600),
+        "tooslow":     ("slower",      24 * 3600),
+        "later":       ("user",              900),
+        "generic":     ("user",             1800),
+    }
+
+    def _apply_decline(self, username: str, tc: Optional[dict],
+                       reason_key: Optional[str], reason_text: Optional[str] = None):
+        key = _normalize_decline_key(reason_key, reason_text)
+        scope, secs = self._DECLINE_POLICY.get(key, ("user", 1800))
+        LOG.info("%s declined our %s challenge (%s)", username,
+                 _format_time_control(tc) if tc else "?", key)
+        if tc is None or scope == "user":
+            self.cooldowns.block(username, seconds=secs, reason=f"declined:{key}")
+        elif scope == "tc":
+            self.cooldowns.block(username, seconds=secs, reason=f"declined:{key}", tc=tc)
+        else:
+            # "too fast" rules out everything at least as fast, not just the
+            # one clock we happened to offer — that's the whole point of the
+            # reason code, and blocking only the exact TC would have us walk
+            # down 5+3, 5+0, 3+2, 3+0, 1+1 one refusal at a time.
+            ref = _tc_total(tc)
+            for other in self.cfg.autoqueue.time_controls:
+                total = _tc_total(other)
+                if (scope == "faster" and total <= ref) or (scope == "slower" and total >= ref):
+                    self.cooldowns.block(username, seconds=secs,
+                                         reason=f"declined:{key}", tc=other)
+        if key in ("rated", "casual"):
+            LOG.info("  (%s wants %s games; autoqueue.rated is %s)", username,
+                     "casual" if key == "rated" else "rated", self.cfg.autoqueue.rated)
+
+    # -- autoqueue ---------------------------------------------------------
+    def _online_bots(self) -> list[dict]:
+        aq = self.cfg.autoqueue
+        now = time.time()
+        if self._bots_cache and now - self._bots_cache_ts < aq.bot_list_cache_secs:
+            return self._bots_cache
+        bots = self.api.online_bots(nb=aq.candidates_per_poll)
+        if bots:
+            self._bots_cache, self._bots_cache_ts = bots, now
+        return bots
 
     def _autoqueue_pass(self):
         aq = self.cfg.autoqueue
@@ -889,14 +1214,17 @@ class LichessBot:
                        n, self.cfg.max_concurrent_games)
             return
         with self.pending_lock:
-            pending = self.pending_challenges
-            if pending >= aq.max_pending_challenges:
-                LOG.debug("Autoqueue: skipping, pending challenges at cap (%d/%d) — "
-                           "targets: %s", pending, aq.max_pending_challenges,
-                           list(self.pending_challenge_targets.values()))
-                return
-        now = time.time()
-        wait_left = aq.min_seconds_between_challenges - (now - self._last_challenge_ts)
+            pending = len(self.pending)
+            pending_targets = list(self.pending.values())
+        # Never keep more challenges in flight than the games we could
+        # actually start, or we end up force-declining our own successes.
+        slots = min(aq.max_pending_challenges - pending,
+                    self.cfg.max_concurrent_games - n)
+        if slots <= 0:
+            LOG.debug("Autoqueue: no free slots (%d pending, %d active) — targets: %s",
+                       pending, n, [t["user"] for t in pending_targets])
+            return
+        wait_left = aq.min_seconds_between_challenges - (time.time() - self._last_challenge_ts)
         if wait_left > 0:
             LOG.debug("Autoqueue: skipping, %.1fs left before next challenge is allowed",
                        wait_left)
@@ -910,9 +1238,8 @@ class LichessBot:
             speed = _speed_bucket(tc["limit"], tc["increment"])
             tcs_by_speed.setdefault(speed, []).append(tc)
 
-        bots = self.api.online_bots(nb=aq.candidates_per_poll)
-        with self.pending_lock:
-            already_pending = {u.lower() for u in self.pending_challenge_targets.values()}
+        bots = self._online_bots()
+        already_pending = {t["user"].lower() for t in pending_targets}
 
         # (username, time_control) pairs — a bot that only fits one of
         # several configured time controls still gets one shot at that one.
@@ -942,7 +1269,11 @@ class LichessBot:
                     continue
                 if not aq.rating_range.allows(perf.get("rating"), self._my_rating(speed)):
                     continue
-                matching_tcs.extend(tcs)
+                # Per-TC cooldowns live here: a bot that has refused 5+3 is
+                # still a perfectly good 1+1 opponent.
+                matching_tcs.extend(
+                    tc for tc in tcs if not self.cooldowns.is_cooling_down(username, tc)
+                )
             if matching_tcs:
                 # One entry per bot (not per matching time control) so a bot
                 # that happens to qualify at three speeds isn't three times
@@ -952,15 +1283,24 @@ class LichessBot:
                 skipped_rating_or_games += 1
 
         if not eligible:
-            LOG.debug("Autoqueue: 0/%d online bots eligible this pass "
-                       "(%d already pending, %d cooling down, %d no rating/game-count match)",
-                       len(bots), skipped_pending, skipped_cooldown, skipped_rating_or_games)
+            LOG.info("Autoqueue: 0/%d online bots eligible "
+                     "(%d already pending, %d cooling down, %d no rating/game-count/"
+                     "time-control match)",
+                     len(bots), skipped_pending, skipped_cooldown, skipped_rating_or_games)
             return
         # online_bots() comes back in a fairly fixed order (recently-online
         # bots first), so always taking the first match tends to hammer
         # whichever popular bot happens to sit at the top. Pick randomly
         # among everyone who qualifies instead.
-        username, time_control = random.choice(eligible)
+        # One challenge per pass, full stop. challenges_per_pass historically
+        # meant "send this many back to back with no real gap," which is
+        # exactly the pattern that draws sustained 429s on the challenge
+        # endpoint (its own limit is tighter than the general one, and
+        # bursts get read as abuse rather than as N independent slow
+        # clients). min_seconds_between_challenges is what actually paces
+        # things; let it do that job every pass instead of overriding it here.
+        random.shuffle(eligible)
+        username, time_control = eligible[0]
         self._send_autoqueue_challenge(username, time_control)
 
     def _send_autoqueue_challenge(self, username: str, time_control: dict):
@@ -978,27 +1318,36 @@ class LichessBot:
         if resp.ok:
             challenge_id = None
             try:
-                challenge_id = resp.json().get("challenge", {}).get("id")
+                body = resp.json()
+                # POST /api/challenge/{user} returns the challenge object at
+                # the top level; only some other endpoints nest it under
+                # "challenge". Reading only the nested form (as this used to)
+                # silently yielded None, so no pending target was ever
+                # recorded, so the same bot got re-challenged every pass.
+                if isinstance(body, dict):
+                    obj = body.get("challenge") if isinstance(body.get("challenge"), dict) else body
+                    challenge_id = obj.get("id")
             except (ValueError, AttributeError):
                 pass
+            key = challenge_id or f"local:{username.lower()}:{time.time()}"
             with self.pending_lock:
-                self.pending_challenges += 1
-                if challenge_id:
-                    self.pending_challenge_targets[challenge_id] = username
+                self.pending[key] = {"user": username, "tc": time_control,
+                                     "ts": time.time(), "id": challenge_id}
+            if not challenge_id:
+                LOG.debug("No challenge id in response for %s; tracking locally", username)
         elif resp.status_code == 400:
-            recorded = self.cooldowns.record_from_error_text(username, resp.text)
-            if not recorded:
-                # No explicit timestamp given; still avoid hammering this bot —
-                # park it for an hour as a generic backoff.
-                until = datetime.now(timezone.utc).timestamp() + 3600
-                until_iso = datetime.fromtimestamp(until, tz=timezone.utc).isoformat()
-                self.cooldowns.set_cooldown(username, until_iso)
-            LOG.info("Challenge to %s rejected: %s", username, resp.text.strip())
+            if not self.cooldowns.record_from_error_text(username, resp.text, tc=time_control):
+                # No explicit timestamp given. This is usually "can't challenge
+                # this player right now" (offline, blocking us, or already in a
+                # challenge), which is about the bot rather than the clock.
+                self.cooldowns.block(username, seconds=3600, reason="http-400")
+            LOG.info("Challenge to %s rejected: %s", username, resp.text.strip()[:200])
+        elif resp.status_code == 404:
+            self.cooldowns.block(username, seconds=24 * 3600, reason="not-found")
         else:
             LOG.warning("Unexpected status %s challenging %s: %s",
-                        resp.status_code, username, resp.text)
+                        resp.status_code, username, resp.text[:200])
 
-    # -- main loop -----------------------------------------------------------
     def _login_with_retry(self) -> dict:
         """Block until we can reach Lichess, instead of crashing the whole
         process if the network/DNS isn't up yet at startup. Backs off up to

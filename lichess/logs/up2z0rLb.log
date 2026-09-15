@@ -1,0 +1,46 @@
+2026-09-15 00:31:39,128 ==============================================================================
+2026-09-15 00:31:39,129 [up2z0rLb] Merlin2LmmL (1089) vs PlayAgainstMyBot (2648)  |  casual Standard  |  1000+1000  |  playing black
+2026-09-15 00:31:39,129 ==============================================================================
+2026-09-15 00:31:41,927 [up2z0rLb] #1   Black e7e5   d-     n-      nps-      eval-        0.6s
+2026-09-15 00:31:42,207 [up2z0rLb] #2   Black g8f6   d-     n-      nps-      eval-        0.1s
+2026-09-15 00:31:42,723 [up2z0rLb] #3   Black b8c6   d-     n-      nps-      eval-        0.1s
+2026-09-15 00:31:46,910 [up2z0rLb] #4   Black d8e7   d13    n14.2M  nps3.7M   eval-0.92    3.8s
+2026-09-15 00:31:50,798 [up2z0rLb] #5   Black e7c5   d12    n10.3M  nps2.8M   eval-0.92    3.7s
+2026-09-15 00:32:15,772 [up2z0rLb] #6   Black f8d6   d11    n7.6M   nps2.5M   eval-0.92    3.6s
+2026-09-15 00:32:21,095 [up2z0rLb] #7   Black c5a5   d13    n4.8M   nps1.4M   eval-0.78    3.4s
+2026-09-15 00:32:25,382 [up2z0rLb] #8   Black f6g4   d11    n5.7M   nps2.3M   eval-0.76    3.3s
+2026-09-15 00:32:30,335 [up2z0rLb] #9   Black g4e3   d14    n9.1M   nps3.4M   eval-1.16    3.2s
+2026-09-15 00:32:33,531 [up2z0rLb] #10  Black e8g8   d12    n11.6M  nps3.8M   eval-1.15    3.1s
+2026-09-15 00:32:37,397 [up2z0rLb] #11  Black e5d4   d12    n7.6M   nps2.9M   eval-1.20    3.0s
+2026-09-15 00:32:40,381 [up2z0rLb] #12  Black f8e8   d13    n10.0M  nps3.5M   eval-1.12    2.9s
+2026-09-15 00:32:43,976 [up2z0rLb] #13  Black c6e5   d12    n8.1M   nps2.9M   eval-1.63    2.8s
+2026-09-15 00:32:47,728 [up2z0rLb] #14  Black d6e5   d13    n5.9M   nps3.1M   eval-1.56    2.7s
+2026-09-15 00:32:50,834 [up2z0rLb] #15  Black a5c5   d14    n8.2M   nps3.2M   eval-2.58    2.6s
+2026-09-15 00:32:57,796 [up2z0rLb] #16  Black c5c4   d14    n4.8M   nps3.0M   eval-2.58    2.5s
+2026-09-15 00:33:02,314 [up2z0rLb] #17  Black c4c3   d17    n8.1M   nps3.3M   eval-6.05    2.4s
+2026-09-15 00:33:05,316 [up2z0rLb] #18  Black c3b4   d15    n7.3M   nps3.2M   eval-6.09    2.4s
+2026-09-15 00:33:08,887 [up2z0rLb] #19  Black b4d2   d13    n5.6M   nps2.5M   eval-6.11    2.3s
+2026-09-15 00:33:13,042 [up2z0rLb] #20  Black d2a2   d13    n3.2M   nps1.4M   eval-7.52    2.2s
+2026-09-15 00:33:16,811 [up2z0rLb] #21  Black a2a5   d15    n3.7M   nps2.4M   eval-7.52    2.2s
+2026-09-15 00:33:20,694 [up2z0rLb] #22  Black g8f8   d13    n6.6M   nps3.2M   eval-7.52    2.1s
+2026-09-15 00:33:23,697 [up2z0rLb] #23  Black a5d2   d13    n8.0M   nps3.9M   eval-7.56    2.0s
+2026-09-15 00:33:26,622 [up2z0rLb] #24  Black d2e3   d14    n6.0M   nps3.0M   eval-7.55    2.0s
+2026-09-15 00:33:29,592 [up2z0rLb] #25  Black e3c3   d14    n6.0M   nps3.1M   eval-7.62    1.9s
+2026-09-15 00:33:32,494 [up2z0rLb] #26  Black e5c3   d14    n1.6M   nps1.8M   eval-7.60    1.9s
+2026-09-15 00:33:35,420 [up2z0rLb] #27  Black c3a5   d14    n3.3M   nps2.3M   eval-7.62    1.8s
+2026-09-15 00:33:39,045 [up2z0rLb] #28  Black a5b6   d14    n3.4M   nps2.3M   eval-7.60    1.8s
+2026-09-15 00:33:42,920 [up2z0rLb] #29  Black b6d4   d13    n8.6M   nps4.9M   eval-7.79    1.8s
+2026-09-15 00:33:45,554 [up2z0rLb] #30  Black d4a1   d13    n1.9M   nps2.4M   eval-10.90   1.7s
+2026-09-15 00:33:47,831 [up2z0rLb] #31  Black e8e4   d14    n1.3M   nps3.6M   eval-10.70   1.7s
+2026-09-15 00:33:50,291 [up2z0rLb] #32  Black e4b4   d13    n5.0M   nps3.2M   eval-11.40   1.6s
+2026-09-15 00:33:53,000 [up2z0rLb] #33  Black b4d4   d13    n2.9M   nps3.1M   eval-11.39   1.6s
+2026-09-15 00:33:55,359 [up2z0rLb] #34  Black d4d5   d12    n4.4M   nps3.0M   eval-11.40   1.6s
+2026-09-15 00:33:57,392 [up2z0rLb] #35  Black d5e5   d12    n4.0M   nps3.2M   eval-11.43   1.5s
+2026-09-15 00:34:00,342 [up2z0rLb] #36  Black e5e6   d12    n7.5M   nps4.9M   eval-11.43   1.5s
+2026-09-15 00:34:03,045 [up2z0rLb] #37  Black a8b8   d13    n2.5M   nps1.9M   eval-14.01   1.5s
+2026-09-15 00:34:07,598 [up2z0rLb] #38  Black b8b1   d12    n2.6M   nps1.8M   eval-14.80   1.5s
+2026-09-15 00:34:11,129 [up2z0rLb] #39  Black e6e4   d12    n5.9M   nps4.1M   eval-25.82   1.4s
+2026-09-15 00:34:12,967 [up2z0rLb] #40  Black b1b2   d10    n6.4M   nps4.5M   eval#-3      1.4s
+2026-09-15 00:34:16,737 [up2z0rLb] #41  Black g7g5   d11    n8.3M   nps6.0M   eval#-2      1.4s
+2026-09-15 00:34:18,879 [up2z0rLb] #42  Black e4e3   d10    n4.6M   nps3.3M   eval#-1      1.4s
+2026-09-15 00:34:18,928 [up2z0rLb] Game over: black wins (mate)
